@@ -1,0 +1,11 @@
+[build]
+target = "index.html"
+dist = "dist"
+
+[server]
+port = 8080
+
+[[hooks]]
+stage = "build"
+command = "sh"
+command_arguments = ["-c", "npx tailwindcss -i src/tailwind.css -o $TRUNK_STAGING_DIR/tailwind.css"]
