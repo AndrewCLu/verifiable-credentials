@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 vc_core = { path = "../vc_core" }
 actix-web = "4.3"
+serde = "1.0.160"

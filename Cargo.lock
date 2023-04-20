@@ -253,6 +253,7 @@ name = "backend"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "serde",
  "vc_core",
 ]
 
@@ -1489,6 +1490,9 @@ dependencies = [
 [[package]]
 name = "vc_core"
 version = "0.1.0"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "version_check"
