@@ -44,6 +44,10 @@ impl Issuer {
     pub fn get_id(&self) -> &URL {
         &self.id
     }
+
+    pub fn add_verification_method(&mut self, verification_method: VerificationMethod) {
+        self.verification_methods.push(verification_method);
+    }
 }
 
 #[derive(Serialize, Deserialize)]

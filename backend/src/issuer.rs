@@ -50,7 +50,7 @@ async fn add_verification(
     );
 
     registry
-        .add_verification_method(issuer_id, verification_method)
+        .add_verification_method(&issuer_id, verification_method)
         .expect("Could not add verification method.");
 
     HttpResponse::Ok().json(verification_method_id)

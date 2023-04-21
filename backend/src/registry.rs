@@ -7,6 +7,7 @@ use vc_core::{Issuer, VerificationMethod, URL};
 pub enum RegistryError {
     SerializationError(String),
     DatabaseError(String),
+    ArgumentError(String),
 }
 
 impl Error for RegistryError {}
@@ -16,6 +17,7 @@ impl fmt::Display for RegistryError {
         match self {
             RegistryError::SerializationError(e) => write!(f, "Serialization error: {}", e),
             RegistryError::DatabaseError(e) => write!(f, "Database error: {}", e),
+            RegistryError::ArgumentError(e) => write!(f, "Authorization error: {}", e),
         }
     }
 }
@@ -45,7 +47,7 @@ impl VerifiableDataRegistry {
         Ok(())
     }
 
-    pub fn get_issuer(&self, issuer_id: URL) -> Result<Option<Issuer>, RegistryError> {
+    pub fn get_issuer(&self, issuer_id: &URL) -> Result<Option<Issuer>, RegistryError> {
         self.db
             .get(issuer_id.get_str().as_bytes())
             .map_err(|_e| {
@@ -77,9 +79,19 @@ impl VerifiableDataRegistry {
 
     pub fn add_verification_method(
         &mut self,
-        issuser_id: URL,
+        issuer_id: &URL,
         verification_method: VerificationMethod,
-    ) -> Result<(), String> {
-        Ok(())
+    ) -> Result<(), RegistryError> {
+        match self.get_issuer(issuer_id) {
+            Ok(Some(mut issuer)) => {
+                issuer.add_verification_method(verification_method);
+                self.add_issuer(issuer)
+            }
+            Ok(None) => Err(RegistryError::ArgumentError(format!(
+                "Issuer {} does not exist in the registry.",
+                issuer_id
+            ))),
+            Err(e) => Err(e),
+        }
     }
 }
