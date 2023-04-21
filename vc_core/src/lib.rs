@@ -1,7 +1,8 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::error::Error;
+use std::fmt;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct URL(String);
 
 impl URL {
@@ -14,10 +15,17 @@ impl URL {
     }
 }
 
+impl fmt::Display for URL {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.get_str())
+    }
+}
+
 pub struct VerifiableCredential {}
 
 pub struct VerifiablePresentation {}
 
+#[derive(Serialize, Deserialize)]
 pub struct Issuer {
     id: URL,
     name: String,
@@ -38,6 +46,7 @@ impl Issuer {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct VerificationMethod {
     id: URL,
     type_: String,
