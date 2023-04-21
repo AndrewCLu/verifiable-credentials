@@ -1,7 +1,7 @@
 use serde::Serialize;
 use std::error::Error;
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct URL(String);
 
 impl URL {

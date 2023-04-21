@@ -1,17 +1,17 @@
-use std::error::Error;
 use vc_core::{Issuer, VerificationMethod, URL};
-pub struct Registry {}
 
-impl Registry {
+pub struct VerifiableDataRegistry {}
+
+impl VerifiableDataRegistry {
     pub fn new() -> Self {
         Self {}
     }
 
-    pub fn register_issuer(&mut self, iss: Issuer) -> Result<(), String> {
+    pub fn add_issuer(&mut self, iss: Issuer) -> Result<(), String> {
         Ok(())
     }
 
-    pub fn register_verification_method(
+    pub fn add_verification_method(
         &mut self,
         iss_id: URL,
         vm: VerificationMethod,

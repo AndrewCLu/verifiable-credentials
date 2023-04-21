@@ -1,19 +1,20 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-use registry::Registry;
+use actix_web::{web, App, HttpServer};
+use registry::VerifiableDataRegistry;
+use std::sync::Mutex;
 
 mod issuer;
 pub mod registry;
 
-// #[get("/")]
-// async fn index() -> impl Responder {
-//     HttpResponse::Ok().body("Hello, world!")
-// }
-
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let registry = Registry::new();
-    HttpServer::new(|| App::new().service(issuer::init_routes()))
-        .bind("127.0.0.1:8000")?
-        .run()
-        .await
+    let registry = web::Data::new(Mutex::new(VerifiableDataRegistry::new()));
+
+    HttpServer::new(move || {
+        App::new()
+            .app_data(web::Data::new(registry.clone()))
+            .service(issuer::init_routes())
+    })
+    .bind("127.0.0.1:8000")?
+    .run()
+    .await
 }
