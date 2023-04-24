@@ -1,4 +1,4 @@
-use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, Options, DB};
+use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options, DB};
 use std::error::Error;
 use std::fmt;
 use vc_core::{CredentialSchema, Issuer, VerificationMethod, URL};
@@ -29,6 +29,7 @@ pub struct VerifiableDataRegistry {
 impl VerifiableDataRegistry {
     const ISSUER_PATH: &'static str = "issuer";
     const SCHEMA_PATH: &'static str = "schema";
+    const DEFAULT_RESOURCE_LIMIT: usize = 20;
 
     pub fn new(db_path: &str) -> Result<Self, RegistryError> {
         let mut db_options = Options::default();
@@ -106,6 +107,50 @@ impl VerifiableDataRegistry {
                     })
                     .transpose()
             })
+    }
+
+    pub fn get_all_issuers(self, limit: Option<usize>) -> Result<Vec<Issuer>, RegistryError> {
+        let issuers = self.db.iterator_cf(self.issuer_cf()?, IteratorMode::Start);
+        let limit = limit.unwrap_or(Self::DEFAULT_RESOURCE_LIMIT);
+
+        Ok(issuers
+            .filter_map(|result| {
+                if let Ok((_key, value)) = result {
+                    match String::from_utf8(value.to_vec()) {
+                        Ok(issuer_json) => {
+                            match serde_json::from_str::<Issuer>(issuer_json.as_str()) {
+                                Ok(issuer) => Some(issuer),
+                                Err(_) => {
+                                    eprintln!(
+                                        "{:?}",
+                                        RegistryError::SerializationError(
+                                            "Could not deserialize issuer.".to_string()
+                                        )
+                                    );
+                                    None
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            eprintln!(
+                                "{:?}",
+                                RegistryError::SerializationError(
+                                    "Could not deserialize issuer.".to_string()
+                                )
+                            );
+                            None
+                        }
+                    }
+                } else {
+                    eprintln!(
+                        "{:?}",
+                        RegistryError::DatabaseError("Could not fetch issuers.".to_string())
+                    );
+                    None
+                }
+            })
+            .take(limit)
+            .collect())
     }
 
     pub fn add_verification_method(
