@@ -1,7 +1,7 @@
-use rocksdb::DB;
+use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, Options, DB};
 use std::error::Error;
 use std::fmt;
-use vc_core::{Issuer, VerificationMethod, URL};
+use vc_core::{CredentialSchema, Issuer, VerificationMethod, URL};
 
 #[derive(Debug)]
 pub enum RegistryError {
@@ -27,8 +27,35 @@ pub struct VerifiableDataRegistry {
 }
 
 impl VerifiableDataRegistry {
-    pub fn new(db: DB) -> Self {
-        Self { db }
+    const ISSUER_PATH: &'static str = "issuer";
+    const SCHEMA_PATH: &'static str = "schema";
+
+    pub fn new(db_path: &str) -> Result<Self, RegistryError> {
+        let mut db_options = Options::default();
+        db_options.create_if_missing(true);
+        db_options.create_missing_column_families(true);
+        let issuer_cf = ColumnFamilyDescriptor::new(Self::ISSUER_PATH, Options::default());
+        let schema_cf = ColumnFamilyDescriptor::new(Self::SCHEMA_PATH, Options::default());
+        let db = DB::open_cf_descriptors(&db_options, db_path, vec![issuer_cf, schema_cf])
+            .map_err(|_e| RegistryError::DatabaseError("Could not open database.".to_string()))?;
+
+        Ok(Self { db })
+    }
+
+    fn issuer_cf(&self) -> Result<&ColumnFamily, RegistryError> {
+        self.db
+            .cf_handle(Self::ISSUER_PATH)
+            .ok_or(RegistryError::DatabaseError(
+                "Could not fetch issuer handler.".to_string(),
+            ))
+    }
+
+    fn schema_cf(&self) -> Result<&ColumnFamily, RegistryError> {
+        self.db
+            .cf_handle(Self::SCHEMA_PATH)
+            .ok_or(RegistryError::DatabaseError(
+                "Could not fetch schema handler.".to_string(),
+            ))
     }
 
     pub fn add_issuer(&mut self, issuer: Issuer) -> Result<(), RegistryError> {
@@ -36,7 +63,11 @@ impl VerifiableDataRegistry {
             RegistryError::SerializationError("Could not serialize issuer.".to_string())
         })?;
         self.db
-            .put(issuer.get_id().get_str().as_bytes(), issuer_json.as_bytes())
+            .put_cf(
+                self.issuer_cf()?,
+                issuer.get_id().get_str().as_bytes(),
+                issuer_json.as_bytes(),
+            )
             .map_err(|_e| {
                 RegistryError::DatabaseError(format!(
                     "Could not insert issuer {} into database.",
@@ -49,7 +80,7 @@ impl VerifiableDataRegistry {
 
     pub fn get_issuer(&self, issuer_id: &URL) -> Result<Option<Issuer>, RegistryError> {
         self.db
-            .get(issuer_id.get_str().as_bytes())
+            .get_cf(self.issuer_cf()?, issuer_id.get_str().as_bytes())
             .map_err(|_e| {
                 RegistryError::DatabaseError(format!(
                     "Could not retrieve issuer {} from database.",
@@ -93,5 +124,25 @@ impl VerifiableDataRegistry {
             ))),
             Err(e) => Err(e),
         }
+    }
+
+    pub fn add_schema(&mut self, schema: CredentialSchema) -> Result<(), RegistryError> {
+        let schema_json = serde_json::to_string(&schema).map_err(|_e| {
+            RegistryError::SerializationError("Could not serialize schema.".to_string())
+        })?;
+        self.db
+            .put_cf(
+                self.schema_cf()?,
+                schema.get_id().get_str().as_bytes(),
+                schema_json.as_bytes(),
+            )
+            .map_err(|_e| {
+                RegistryError::DatabaseError(format!(
+                    "Could not insert schema {} into database.",
+                    schema.get_id()
+                ))
+            })?;
+
+        Ok(())
     }
 }

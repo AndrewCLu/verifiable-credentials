@@ -21,10 +21,6 @@ impl fmt::Display for URL {
     }
 }
 
-pub struct VerifiableCredential {}
-
-pub struct VerifiablePresentation {}
-
 #[derive(Serialize, Deserialize)]
 pub struct Issuer {
     id: URL,
@@ -68,3 +64,28 @@ impl VerificationMethod {
         }
     }
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct CredentialSchema {
+    id: URL,
+    type_: String,
+    creator_id: URL,
+}
+
+impl CredentialSchema {
+    pub fn new(id: URL, type_: String, creator_id: URL) -> Self {
+        Self {
+            id,
+            type_,
+            creator_id,
+        }
+    }
+
+    pub fn get_id(&self) -> &URL {
+        &self.id
+    }
+}
+
+pub struct VerifiableCredential {}
+
+pub struct VerifiablePresentation {}
