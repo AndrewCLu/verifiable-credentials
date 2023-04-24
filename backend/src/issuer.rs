@@ -1,37 +1,10 @@
-use actix_web::{get, post, web, HttpResponse, Responder, ResponseError, Scope};
+use super::UserError;
+use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 use serde::Deserialize;
-use std::fmt;
 use std::sync::Mutex;
 use vc_core::{Issuer, VerificationMethod, URL};
 
 use crate::registry::VerifiableDataRegistry;
-
-#[derive(Debug)]
-pub enum UserError {
-    BadRequest,
-    Unauthorized,
-    NotFound,
-    InternalServerError,
-}
-
-impl ResponseError for UserError {
-    fn error_response(&self) -> HttpResponse {
-        match *self {
-            UserError::BadRequest => HttpResponse::BadRequest().body("Bad Request"),
-            UserError::Unauthorized => HttpResponse::Unauthorized().body("Unauthorized"),
-            UserError::NotFound => HttpResponse::NotFound().body("Resource Not Found"),
-            UserError::InternalServerError => {
-                HttpResponse::InternalServerError().body("Internal Server Error")
-            }
-        }
-    }
-}
-
-impl fmt::Display for UserError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
 
 #[derive(Deserialize)]
 struct CreateIssuerRequest {
