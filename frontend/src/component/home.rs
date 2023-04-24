@@ -1,3 +1,4 @@
+use super::add_issuer::AddIssuer;
 use yew::{function_component, html, use_state, Html};
 
 #[function_component]
@@ -15,6 +16,9 @@ pub fn Home() -> Html {
         <div>
             <button class="bg-purple-300" {onclick}>{ "+1" }</button>
             <p>{ *counter }</p>
+            <div>
+            </div>
+            <AddIssuer />
         </div>
     }
 }

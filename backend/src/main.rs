@@ -1,4 +1,5 @@
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, ResponseError};
+use actix_cors::Cors;
+use actix_web::{get, web, App, HttpRequest, HttpResponse, HttpServer, ResponseError};
 use registry::VerifiableDataRegistry;
 use std::fmt;
 use std::sync::Mutex;
@@ -35,14 +36,24 @@ async fn not_found(_req: HttpRequest) -> HttpResponse {
     UserError::NotFound.error_response()
 }
 
+#[get("/")]
+async fn hello_world() -> HttpResponse {
+    HttpResponse::Ok().body("Hello, world!")
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let registry = web::Data::new(Mutex::new(VerifiableDataRegistry::new(
         "verifiable_data_registry",
     )));
+
     HttpServer::new(move || {
+        let cors = Cors::permissive();
+
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(registry.clone()))
+            .service(hello_world)
             .service(issuer::init_routes())
             .default_service(web::to(not_found))
     })
