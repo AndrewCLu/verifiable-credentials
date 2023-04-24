@@ -116,35 +116,30 @@ impl VerifiableDataRegistry {
         Ok(issuers
             .filter_map(|result| {
                 if let Ok((_key, value)) = result {
-                    match String::from_utf8(value.to_vec()) {
-                        Ok(issuer_json) => {
-                            match serde_json::from_str::<Issuer>(issuer_json.as_str()) {
-                                Ok(issuer) => Some(issuer),
-                                Err(_) => {
-                                    eprintln!(
-                                        "{:?}",
-                                        RegistryError::SerializationError(
-                                            "Could not deserialize issuer.".to_string()
-                                        )
-                                    );
-                                    None
-                                }
-                            }
-                        }
-                        Err(_) => {
+                    String::from_utf8(value.to_vec())
+                        .map_err(|_| {
                             eprintln!(
                                 "{:?}",
                                 RegistryError::SerializationError(
                                     "Could not deserialize issuer.".to_string()
                                 )
                             );
-                            None
-                        }
-                    }
+                        })
+                        .and_then(|issuer_json| {
+                            serde_json::from_str::<Issuer>(&issuer_json).map_err(|_| {
+                                eprintln!(
+                                    "{:?}",
+                                    RegistryError::SerializationError(
+                                        "Could not deserialize issuer.".to_string()
+                                    )
+                                );
+                            })
+                        })
+                        .ok()
                 } else {
                     eprintln!(
                         "{:?}",
-                        RegistryError::DatabaseError("Could not fetch issuers.".to_string())
+                        RegistryError::DatabaseError("Could not fetch issuer.".to_string())
                     );
                     None
                 }
@@ -189,5 +184,47 @@ impl VerifiableDataRegistry {
             })?;
 
         Ok(())
+    }
+
+    pub fn get_all_schemas(
+        self,
+        limit: Option<usize>,
+    ) -> Result<Vec<CredentialSchema>, RegistryError> {
+        let schemas = self.db.iterator_cf(self.schema_cf()?, IteratorMode::Start);
+        let limit = limit.unwrap_or(Self::DEFAULT_RESOURCE_LIMIT);
+
+        Ok(schemas
+            .filter_map(|result| {
+                if let Ok((_key, value)) = result {
+                    String::from_utf8(value.to_vec())
+                        .map_err(|_| {
+                            eprintln!(
+                                "{:?}",
+                                RegistryError::SerializationError(
+                                    "Could not deserialize schema.".to_string()
+                                )
+                            );
+                        })
+                        .and_then(|schema_json| {
+                            serde_json::from_str::<CredentialSchema>(&schema_json).map_err(|_| {
+                                eprintln!(
+                                    "{:?}",
+                                    RegistryError::SerializationError(
+                                        "Could not deserialize schema.".to_string()
+                                    )
+                                );
+                            })
+                        })
+                        .ok()
+                } else {
+                    eprintln!(
+                        "{:?}",
+                        RegistryError::DatabaseError("Could not fetch schema.".to_string())
+                    );
+                    None
+                }
+            })
+            .take(limit)
+            .collect())
     }
 }
