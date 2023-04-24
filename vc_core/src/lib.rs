@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
@@ -66,18 +67,57 @@ impl VerificationMethod {
 }
 
 #[derive(Serialize, Deserialize)]
+pub enum SchemaPropertyType {
+    Text,
+    Number,
+    Boolean,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SchemaPropertyValue {
+    type_: SchemaPropertyType,
+    description: String,
+}
+
+impl SchemaPropertyValue {
+    pub fn new(type_: SchemaPropertyType, description: String) -> Self {
+        Self { type_, description }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum SchemaProperty {
+    Value(SchemaPropertyValue),
+    Array(Vec<SchemaProperty>),
+    Map(HashMap<String, SchemaProperty>),
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct CredentialSchema {
     id: URL,
     type_: String,
+    name: String,
+    description: String,
     creator_id: URL,
+    properties: HashMap<String, SchemaProperty>,
 }
 
 impl CredentialSchema {
-    pub fn new(id: URL, type_: String, creator_id: URL) -> Self {
+    pub fn new(
+        id: URL,
+        type_: String,
+        name: String,
+        description: String,
+        creator_id: URL,
+        properties: HashMap<String, SchemaProperty>,
+    ) -> Self {
         Self {
             id,
             type_,
+            name,
+            description,
             creator_id,
+            properties,
         }
     }
 
