@@ -7,21 +7,21 @@ use vc_core::{Issuer, VerificationMethod, URL};
 use crate::registry::VerifiableDataRegistry;
 
 #[derive(Deserialize)]
-struct CreateIssuerRequest {
+struct AddIssuerRequest {
     id: String,
     name: String,
 }
 
-#[post("/create")]
-async fn create(
-    request: web::Json<CreateIssuerRequest>,
+#[post("/add_issuer")]
+async fn add_issuer(
+    req: web::Json<AddIssuerRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
     let mut registry = registry
         .lock()
         .map_err(|_e| UserError::InternalServerError)?;
-    let issuer_id = URL::new(&request.id).map_err(|_e| UserError::BadRequest)?;
-    let issuer = Issuer::new(issuer_id.clone(), request.name.clone());
+    let issuer_id = URL::new(&req.id).map_err(|_e| UserError::BadRequest)?;
+    let issuer = Issuer::new(issuer_id.clone(), req.name.clone());
 
     // TODO: Process distinct possible errors here accordingly
     registry
@@ -32,29 +32,50 @@ async fn create(
 }
 
 #[derive(Deserialize)]
-struct AddVerificationRequest {
+pub struct GetAllIssuersRequest {
+    limit: Option<usize>,
+}
+
+#[get("/get_all_issuers")]
+async fn get_all_issuers(
+    req: web::Query<GetAllIssuersRequest>,
+    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+) -> Result<HttpResponse, UserError> {
+    let registry = registry
+        .lock()
+        .map_err(|_e| UserError::InternalServerError)?;
+    let limit = req.limit;
+    let issuers = registry
+        .get_all_issuers(limit)
+        .map_err(|_e| UserError::InternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(issuers))
+}
+
+#[derive(Deserialize)]
+struct AddVerificationMethodRequest {
     issuer_id: String,
     verification_method_id: String,
     type_: String,
     public_key_multibase: String,
 }
 
-#[get("/add_verification")]
-async fn add_verification(
-    request: web::Json<AddVerificationRequest>,
+#[get("/add_verification_method")]
+async fn add_verification_method(
+    req: web::Json<AddVerificationMethodRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
     let mut registry = registry
         .lock()
         .map_err(|_e| UserError::InternalServerError)?;
-    let issuer_id = URL::new(&request.issuer_id).map_err(|_e| UserError::BadRequest)?;
+    let issuer_id = URL::new(&req.issuer_id).map_err(|_e| UserError::BadRequest)?;
     let verification_method_id =
-        URL::new(&request.verification_method_id).map_err(|_e| UserError::BadRequest)?;
+        URL::new(&req.verification_method_id).map_err(|_e| UserError::BadRequest)?;
     let verification_method = VerificationMethod::new(
         verification_method_id.clone(),
-        request.type_.clone(),
+        req.type_.clone(),
         issuer_id.clone(),
-        request.public_key_multibase.clone(),
+        req.public_key_multibase.clone(),
     );
 
     // TODO: Process distinct possible errors here accordingly
@@ -70,6 +91,27 @@ async fn add_schema() -> impl Responder {
     HttpResponse::Ok().body("Added a schema.")
 }
 
+#[derive(Deserialize)]
+pub struct GetAllSchemasRequest {
+    limit: Option<usize>,
+}
+
+#[get("/get_all_schemas")]
+async fn get_all_schemas(
+    req: web::Query<GetAllSchemasRequest>,
+    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+) -> Result<HttpResponse, UserError> {
+    let registry = registry
+        .lock()
+        .map_err(|_e| UserError::InternalServerError)?;
+    let limit = req.limit;
+    let schemas = registry
+        .get_all_schemas(limit)
+        .map_err(|_e| UserError::InternalServerError)?;
+
+    Ok(HttpResponse::Ok().json(schemas))
+}
+
 #[get("/issue_credential")]
 async fn issue_credential() -> impl Responder {
     HttpResponse::Ok().body("Added a credential.")
@@ -82,9 +124,11 @@ async fn revoke_credential() -> impl Responder {
 
 pub fn init_routes() -> Scope {
     web::scope("/issuer")
-        .service(create)
-        .service(add_verification)
+        .service(add_issuer)
+        .service(get_all_issuers)
+        .service(add_verification_method)
         .service(add_schema)
+        .service(get_all_schemas)
         .service(issue_credential)
         .service(revoke_credential)
 }

@@ -109,7 +109,7 @@ impl VerifiableDataRegistry {
             })
     }
 
-    pub fn get_all_issuers(self, limit: Option<usize>) -> Result<Vec<Issuer>, RegistryError> {
+    pub fn get_all_issuers(&self, limit: Option<usize>) -> Result<Vec<Issuer>, RegistryError> {
         let issuers = self.db.iterator_cf(self.issuer_cf()?, IteratorMode::Start);
         let limit = limit.unwrap_or(Self::DEFAULT_RESOURCE_LIMIT);
 
@@ -187,7 +187,7 @@ impl VerifiableDataRegistry {
     }
 
     pub fn get_all_schemas(
-        self,
+        &self,
         limit: Option<usize>,
     ) -> Result<Vec<CredentialSchema>, RegistryError> {
         let schemas = self.db.iterator_cf(self.schema_cf()?, IteratorMode::Start);
