@@ -1,9 +1,16 @@
-use super::issuer_home::use_issuers;
+use std::rc::Rc;
+use vc_core::Issuer;
 use yew::prelude::*;
 
+#[derive(Clone, PartialEq, Properties)]
+pub struct IssuerListProps {
+    pub issuers: Rc<Vec<Issuer>>,
+    pub loading: Rc<bool>,
+}
+
 #[function_component(IssuerList)]
-pub fn issuer_list() -> Html {
-    let (issuers, loading, _) = use_issuers();
+pub fn issuer_list(props: &IssuerListProps) -> Html {
+    let IssuerListProps { issuers, loading } = props;
     let issuer_list = issuers
         .iter()
         .map(|issuer| {
@@ -16,7 +23,7 @@ pub fn issuer_list() -> Html {
         })
         .collect::<Html>();
 
-    let content = if *loading {
+    let content = if **loading {
         html! { <p>{"Loading issuers..."}</p> }
     } else {
         html! { <div class="grid grid-cols-4 gap-4">{issuer_list}</div> }

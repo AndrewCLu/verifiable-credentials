@@ -1,15 +1,20 @@
-use super::issuer_home::use_issuers;
 use log::debug;
 use serde_json::json;
+use std::rc::Rc;
 use uuid::Uuid;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};
 
+#[derive(Clone, PartialEq, Properties)]
+pub struct AddIssuerProps {
+    pub fetch_issuers: Rc<Callback<()>>,
+}
+
 #[function_component]
-pub fn AddIssuer() -> Html {
+pub fn AddIssuer(props: &AddIssuerProps) -> Html {
     let name = use_state(|| "".to_string());
-    let (_, _, fetch_issuers) = use_issuers();
+    let fetch_issuers = props.fetch_issuers.clone();
 
     let handle_input = {
         let name = name.clone();

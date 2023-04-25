@@ -52,12 +52,14 @@ pub fn use_issuers() -> (Rc<Vec<Issuer>>, Rc<bool>, Rc<Callback<()>>) {
 }
 
 #[function_component(IssuerHome)]
+
 pub fn issuer_home() -> Html {
+    let (issuers, loading, fetch_issuers) = use_issuers();
     html! {
         <div class="m-8">
-            <IssuerList />
+            <IssuerList issuers={issuers} loading={loading} />
             <div />
-            <AddIssuer />
+            <AddIssuer fetch_issuers={fetch_issuers.clone()} />
         </div>
     }
 }
