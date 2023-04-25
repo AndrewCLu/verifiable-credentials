@@ -1,3 +1,4 @@
+use crate::constants::BASE_URL;
 use log::debug;
 use serde_json::json;
 use std::rc::Rc;
@@ -40,11 +41,8 @@ pub fn AddIssuer(props: &AddIssuerProps) -> Html {
             });
             spawn_local(async move {
                 let client = reqwest::Client::new();
-                let resp = client
-                    .post("http://127.0.0.1:8000/issuer/add_issuer")
-                    .json(&request_data)
-                    .send()
-                    .await;
+                let url = format!("{}/issuer/add_issuer", BASE_URL);
+                let resp = client.post(url).json(&request_data).send().await;
                 match resp {
                     Ok(resp) => {
                         debug!("Received response: {:?}", resp);
