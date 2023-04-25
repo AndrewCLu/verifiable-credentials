@@ -1,3 +1,4 @@
+use log::debug;
 use serde_json::json;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
@@ -30,13 +31,21 @@ pub fn AddIssuer() -> Html {
             });
             spawn_local(async move {
                 let client = reqwest::Client::new();
-                let res = client
+                let resp = client
                     .post("http://127.0.0.1:8000/issuer/add_issuer")
                     .json(&request_data)
                     .send()
-                    .await
-                    .unwrap();
-                println!("Response: {:?}", res);
+                    .await;
+                match resp {
+                    Ok(resp) => {
+                        debug!("Success!");
+                        debug!("{:?}", resp);
+                    }
+                    Err(Error) => {
+                        debug!("Error");
+                    }
+                }
+                // println!("Response: {:?}", resp);
                 name.set("".to_string());
             });
         })

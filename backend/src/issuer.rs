@@ -1,5 +1,6 @@
 use super::UserError;
 use actix_web::{get, post, web, HttpResponse, Responder, Scope};
+use log::{error, info};
 use serde::Deserialize;
 use std::sync::Mutex;
 use vc_core::{Issuer, VerificationMethod, URL};
@@ -17,17 +18,24 @@ async fn add_issuer(
     req: web::Json<AddIssuerRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
-    let mut registry = registry
-        .lock()
-        .map_err(|_e| UserError::InternalServerError)?;
-    let issuer_id = URL::new(&req.id).map_err(|_e| UserError::BadRequest)?;
+    println!("add_issuer");
+    let mut registry = registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
+    let issuer_id = URL::new(&req.id).map_err(|_e| {
+        error!("Could not parse issuer id.");
+        UserError::BadRequest
+    })?;
     let issuer = Issuer::new(issuer_id.clone(), req.name.clone());
 
     // TODO: Process distinct possible errors here accordingly
-    registry
-        .add_issuer(issuer)
-        .map_err(|_e| UserError::InternalServerError)?;
+    registry.add_issuer(issuer).map_err(|e| {
+        error!("Error adding issuer to registry: {:?}", e);
+        UserError::InternalServerError
+    })?;
 
+    info!("Added issuer to registry: {}", issuer_id);
     Ok(HttpResponse::Ok().json(issuer_id))
 }
 

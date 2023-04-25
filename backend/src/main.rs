@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpRequest, HttpResponse, HttpServer, ResponseError};
 use registry::VerifiableDataRegistry;
 use std::fmt;
@@ -43,6 +44,8 @@ async fn hello_world() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    std::env::set_var("RUST_LOG", "actix_web=info");
+    env_logger::init();
     let registry = web::Data::new(Mutex::new(VerifiableDataRegistry::new(
         "verifiable_data_registry",
     )));
@@ -52,6 +55,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .wrap(Logger::default())
             .app_data(web::Data::new(registry.clone()))
             .service(hello_world)
             .service(issuer::init_routes())
