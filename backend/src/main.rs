@@ -44,11 +44,11 @@ async fn hello_world() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix_web=info");
+    std::env::set_var("RUST_LOG", "backend=debug,actix_web=debug");
     env_logger::init();
-    let registry = web::Data::new(Mutex::new(VerifiableDataRegistry::new(
-        "verifiable_data_registry",
-    )));
+    let registry = VerifiableDataRegistry::new("verifiable_data_registry")
+        .expect("Could not create registry.");
+    let data = web::Data::new(Mutex::new(registry));
 
     HttpServer::new(move || {
         let cors = Cors::permissive();
@@ -56,7 +56,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .wrap(Logger::default())
-            .app_data(web::Data::new(registry.clone()))
+            .app_data(data.clone())
             .service(hello_world)
             .service(issuer::init_routes())
             .default_service(web::to(not_found))

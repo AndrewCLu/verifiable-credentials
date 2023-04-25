@@ -38,14 +38,12 @@ pub fn AddIssuer() -> Html {
                     .await;
                 match resp {
                     Ok(resp) => {
-                        debug!("Success!");
-                        debug!("{:?}", resp);
+                        debug!("Received response: {:?}", resp);
                     }
-                    Err(Error) => {
-                        debug!("Error");
+                    Err(e) => {
+                        debug!("Reqwest error: {:?}", e);
                     }
                 }
-                // println!("Response: {:?}", resp);
                 name.set("".to_string());
             });
         })

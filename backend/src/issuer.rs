@@ -18,7 +18,6 @@ async fn add_issuer(
     req: web::Json<AddIssuerRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
-    println!("add_issuer");
     let mut registry = registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
