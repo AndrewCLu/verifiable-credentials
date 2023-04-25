@@ -44,7 +44,7 @@ async fn hello_world() -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "backend=debug,actix_web=debug");
+    std::env::set_var("RUST_LOG", "backend=debug,actix_web=debug,vc_core=debug");
     env_logger::init();
     let registry = VerifiableDataRegistry::new("verifiable_data_registry")
         .expect("Could not create registry.");

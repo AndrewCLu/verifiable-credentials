@@ -23,14 +23,13 @@ async fn add_issuer(
         UserError::InternalServerError
     })?;
     let issuer_id = URL::new(&req.id).map_err(|_e| {
-        error!("Could not parse issuer id.");
+        error!("Invalid issuer id.");
         UserError::BadRequest
     })?;
     let issuer = Issuer::new(issuer_id.clone(), req.name.clone());
 
-    // TODO: Process distinct possible errors here accordingly
     registry.add_issuer(issuer).map_err(|e| {
-        error!("Error adding issuer to registry: {:?}", e);
+        error!("Error adding issuer {} to registry: {:?}", issuer_id, e);
         UserError::InternalServerError
     })?;
 
@@ -48,13 +47,15 @@ async fn get_all_issuers(
     req: web::Query<GetAllIssuersRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry
-        .lock()
-        .map_err(|_e| UserError::InternalServerError)?;
+    let registry = registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
     let limit = req.limit;
-    let issuers = registry
-        .get_all_issuers(limit)
-        .map_err(|_e| UserError::InternalServerError)?;
+    let issuers = registry.get_all_issuers(limit).map_err(|e| {
+        error!("Error getting issuers from registry: {:?}", e);
+        UserError::InternalServerError
+    })?;
 
     Ok(HttpResponse::Ok().json(issuers))
 }
@@ -72,12 +73,18 @@ async fn add_verification_method(
     req: web::Json<AddVerificationMethodRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
-    let mut registry = registry
-        .lock()
-        .map_err(|_e| UserError::InternalServerError)?;
-    let issuer_id = URL::new(&req.issuer_id).map_err(|_e| UserError::BadRequest)?;
-    let verification_method_id =
-        URL::new(&req.verification_method_id).map_err(|_e| UserError::BadRequest)?;
+    let mut registry = registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
+    let issuer_id = URL::new(&req.issuer_id).map_err(|_e| {
+        error!("Invalid issuer id.");
+        UserError::BadRequest
+    })?;
+    let verification_method_id = URL::new(&req.verification_method_id).map_err(|_e| {
+        error!("Invalid verification method id.");
+        UserError::BadRequest
+    })?;
     let verification_method = VerificationMethod::new(
         verification_method_id.clone(),
         req.type_.clone(),
@@ -85,10 +92,15 @@ async fn add_verification_method(
         req.public_key_multibase.clone(),
     );
 
-    // TODO: Process distinct possible errors here accordingly
     registry
         .add_verification_method(&issuer_id, verification_method)
-        .map_err(|_e| UserError::InternalServerError)?;
+        .map_err(|e| {
+            error!(
+                "Error adding verification method {} to registry: {:?}",
+                verification_method_id, e
+            );
+            UserError::InternalServerError
+        })?;
 
     Ok(HttpResponse::Ok().json(verification_method_id))
 }
@@ -108,13 +120,15 @@ async fn get_all_schemas(
     req: web::Query<GetAllSchemasRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry
-        .lock()
-        .map_err(|_e| UserError::InternalServerError)?;
+    let registry = registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
     let limit = req.limit;
-    let schemas = registry
-        .get_all_schemas(limit)
-        .map_err(|_e| UserError::InternalServerError)?;
+    let schemas = registry.get_all_schemas(limit).map_err(|e| {
+        error!("Error getting schemas from registry: {:?}", e);
+        UserError::InternalServerError
+    })?;
 
     Ok(HttpResponse::Ok().json(schemas))
 }

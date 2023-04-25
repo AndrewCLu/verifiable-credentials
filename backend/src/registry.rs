@@ -1,3 +1,4 @@
+use log::warn;
 use rocksdb::{ColumnFamily, ColumnFamilyDescriptor, IteratorMode, Options, DB};
 use std::error::Error;
 use std::fmt;
@@ -118,28 +119,30 @@ impl VerifiableDataRegistry {
                 if let Ok((_key, value)) = result {
                     String::from_utf8(value.to_vec())
                         .map_err(|_| {
-                            eprintln!(
+                            warn!(
                                 "{:?}",
                                 RegistryError::SerializationError(
-                                    "Could not deserialize issuer.".to_string()
+                                    "Could not deserialize an issuer from bytes to string."
+                                        .to_string()
                                 )
                             );
                         })
                         .and_then(|issuer_json| {
                             serde_json::from_str::<Issuer>(&issuer_json).map_err(|_| {
-                                eprintln!(
+                                warn!(
                                     "{:?}",
                                     RegistryError::SerializationError(
-                                        "Could not deserialize issuer.".to_string()
+                                        "Could not deserialize an issuer from json string."
+                                            .to_string()
                                     )
                                 );
                             })
                         })
                         .ok()
                 } else {
-                    eprintln!(
+                    warn!(
                         "{:?}",
-                        RegistryError::DatabaseError("Could not fetch issuer.".to_string())
+                        RegistryError::DatabaseError("Could not fetch an issuer.".to_string())
                     );
                     None
                 }
@@ -198,28 +201,30 @@ impl VerifiableDataRegistry {
                 if let Ok((_key, value)) = result {
                     String::from_utf8(value.to_vec())
                         .map_err(|_| {
-                            eprintln!(
+                            warn!(
                                 "{:?}",
                                 RegistryError::SerializationError(
-                                    "Could not deserialize schema.".to_string()
+                                    "Could not deserialize a schema from bytes to string."
+                                        .to_string()
                                 )
                             );
                         })
                         .and_then(|schema_json| {
                             serde_json::from_str::<CredentialSchema>(&schema_json).map_err(|_| {
-                                eprintln!(
+                                warn!(
                                     "{:?}",
                                     RegistryError::SerializationError(
-                                        "Could not deserialize schema.".to_string()
+                                        "Could not deserialize a schema from json string."
+                                            .to_string()
                                     )
                                 );
                             })
                         })
                         .ok()
                 } else {
-                    eprintln!(
+                    warn!(
                         "{:?}",
-                        RegistryError::DatabaseError("Could not fetch schema.".to_string())
+                        RegistryError::DatabaseError("Could not fetch a schema.".to_string())
                     );
                     None
                 }
