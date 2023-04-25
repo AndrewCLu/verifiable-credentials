@@ -1,5 +1,6 @@
 use log::debug;
 use serde_json::json;
+use uuid::Uuid;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
 use yew::{platform::spawn_local, prelude::*};
@@ -26,8 +27,8 @@ pub fn AddIssuer() -> Html {
             e.prevent_default();
             let name = name.clone();
             let request_data = json!({
-                "id": "https://example.com/issuer/1",
-                "name": "Issuer Name",
+                "id": Uuid::new_v4().to_string(),
+                "name": *name,
             });
             spawn_local(async move {
                 let client = reqwest::Client::new();

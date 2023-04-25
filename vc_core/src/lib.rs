@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct URL(String);
 
 impl URL {
@@ -22,7 +22,7 @@ impl fmt::Display for URL {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct Issuer {
     id: URL,
     name: String,
@@ -42,12 +42,16 @@ impl Issuer {
         &self.id
     }
 
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
     pub fn add_verification_method(&mut self, verification_method: VerificationMethod) {
         self.verification_methods.push(verification_method);
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq)]
 pub struct VerificationMethod {
     id: URL,
     type_: String,
