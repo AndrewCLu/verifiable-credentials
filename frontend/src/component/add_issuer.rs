@@ -1,3 +1,4 @@
+use super::issuer_home::use_issuers;
 use log::debug;
 use serde_json::json;
 use uuid::Uuid;
@@ -8,6 +9,7 @@ use yew::{platform::spawn_local, prelude::*};
 #[function_component]
 pub fn AddIssuer() -> Html {
     let name = use_state(|| "".to_string());
+    let (_, _, fetch_issuers) = use_issuers();
 
     let handle_input = {
         let name = name.clone();
@@ -26,6 +28,7 @@ pub fn AddIssuer() -> Html {
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             let name = name.clone();
+            let fetch_issuers_clone = fetch_issuers.clone();
             let request_data = json!({
                 "id": Uuid::new_v4().to_string(),
                 "name": *name,
@@ -40,6 +43,7 @@ pub fn AddIssuer() -> Html {
                 match resp {
                     Ok(resp) => {
                         debug!("Received response: {:?}", resp);
+                        fetch_issuers_clone.emit(());
                     }
                     Err(e) => {
                         debug!("Reqwest error: {:?}", e);

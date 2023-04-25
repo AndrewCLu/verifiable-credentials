@@ -1,3 +1,5 @@
+use super::add_issuer::AddIssuer;
+use super::issuer_list::IssuerList;
 use std::rc::Rc;
 use vc_core::Issuer;
 use yew::{platform::spawn_local, prelude::*};
@@ -49,26 +51,13 @@ pub fn use_issuers() -> (Rc<Vec<Issuer>>, Rc<bool>, Rc<Callback<()>>) {
     (issuers, loading, fetch_issuers)
 }
 
-#[function_component(IssuerList)]
-pub fn issuer_list() -> Html {
-    let (issuers, loading, _) = use_issuers();
-    let issuer_list = issuers
-        .iter()
-        .map(|issuer| {
-            html! {
-                <div class="p-4 border border-gray-200">
-                    <h2 class="text-xl font-bold">{issuer.get_name()}</h2>
-                    <p class="text-gray-600">{"ID: "}{issuer.get_id()}</p>
-                </div>
-            }
-        })
-        .collect::<Html>();
-
-    let content = if *loading {
-        html! { <p>{"Loading issuers..."}</p> }
-    } else {
-        html! { <div class="grid grid-cols-4 gap-4">{issuer_list}</div> }
-    };
-
-    html! { <div>{content}</div> }
+#[function_component(IssuerHome)]
+pub fn issuer_home() -> Html {
+    html! {
+        <div class="m-8">
+            <IssuerList />
+            <div />
+            <AddIssuer />
+        </div>
+    }
 }
