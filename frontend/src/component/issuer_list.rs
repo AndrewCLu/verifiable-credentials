@@ -5,7 +5,7 @@ use yew::prelude::*;
 #[derive(Clone, PartialEq, Properties)]
 pub struct IssuerListProps {
     pub issuers: Rc<Vec<Issuer>>,
-    pub loading: Rc<bool>,
+    pub loading: bool,
 }
 
 #[function_component(IssuerList)]
@@ -23,7 +23,7 @@ pub fn issuer_list(props: &IssuerListProps) -> Html {
         })
         .collect::<Html>();
 
-    let content = if **loading {
+    let content = if *loading {
         html! { <p>{"Loading issuers..."}</p> }
     } else {
         html! { <div class="grid grid-cols-4 gap-4">{issuer_list}</div> }

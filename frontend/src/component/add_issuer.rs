@@ -1,7 +1,6 @@
 use crate::constants::BASE_URL;
-use log::debug;
+use log::{debug, error};
 use serde_json::json;
-use std::rc::Rc;
 use uuid::Uuid;
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
@@ -9,13 +8,14 @@ use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct AddIssuerProps {
-    pub fetch_issuers: Rc<Callback<()>>,
+    pub fetch_issuers: Callback<()>,
 }
 
 #[function_component]
 pub fn AddIssuer(props: &AddIssuerProps) -> Html {
     let name = use_state(|| "".to_string());
     let fetch_issuers = props.fetch_issuers.clone();
+    let client = reqwest::Client::new();
 
     let handle_input = {
         let name = name.clone();
@@ -34,26 +34,27 @@ pub fn AddIssuer(props: &AddIssuerProps) -> Html {
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             let name = name.clone();
-            let fetch_issuers_clone = fetch_issuers.clone();
+            let fetch_issuers = fetch_issuers.clone();
+            let client = client.clone();
             let request_data = json!({
                 "id": Uuid::new_v4().to_string(),
                 "name": *name,
             });
-            spawn_local(async move {
-                let client = reqwest::Client::new();
+            let future = async move {
                 let url = format!("{}/issuer/add_issuer", BASE_URL);
                 let resp = client.post(url).json(&request_data).send().await;
                 match resp {
                     Ok(resp) => {
                         debug!("Received response: {:?}", resp);
-                        fetch_issuers_clone.emit(());
+                        fetch_issuers.emit(());
                     }
                     Err(e) => {
-                        debug!("Reqwest error: {:?}", e);
+                        error!("Error creating new issuer: {:?}", e);
                     }
                 }
                 name.set("".to_string());
-            });
+            };
+            spawn_local(future);
         })
     };
 

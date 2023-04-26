@@ -1,6 +1,7 @@
 use super::add_issuer::AddIssuer;
 use super::issuer_list::IssuerList;
 use crate::constants::BASE_URL;
+use log::error;
 use std::rc::Rc;
 use vc_core::Issuer;
 use yew::{platform::spawn_local, prelude::*};
@@ -13,29 +14,29 @@ async fn get_all_issuers() -> Result<Vec<Issuer>, reqwest::Error> {
 }
 
 #[hook]
-pub fn use_issuers() -> (Rc<Vec<Issuer>>, Rc<bool>, Rc<Callback<()>>) {
+pub fn use_issuers() -> (Rc<Vec<Issuer>>, bool, Callback<()>) {
     let issuers = use_state(|| Rc::new(Vec::<Issuer>::new()));
-    let loading = use_state(|| Rc::new(true));
+    let loading = use_state(|| true);
 
-    let (issuers_clone, loading_clone) = (issuers.clone(), loading.clone());
     let fetch_issuers = {
-        Rc::new(Callback::from(move |_| {
+        let (issuers_clone, loading_clone) = (issuers.clone(), loading.clone());
+        Callback::from(move |_| {
             let issuers = issuers_clone.clone();
             let loading = loading_clone.clone();
+            loading.set(true);
             let future = async move {
                 match get_all_issuers().await {
                     Ok(new_issuers) => {
                         issuers.set(Rc::new(new_issuers));
-                        loading.set(Rc::new(false));
                     }
                     Err(_) => {
-                        eprintln!("Failed to fetch issuers.");
-                        loading.set(Rc::new(false));
+                        error!("Failed to fetch issuers.");
                     }
                 }
+                loading.set(false);
             };
             spawn_local(future);
-        }))
+        })
     };
 
     let fetch_issuers_clone = fetch_issuers.clone();
@@ -47,9 +48,7 @@ pub fn use_issuers() -> (Rc<Vec<Issuer>>, Rc<bool>, Rc<Callback<()>>) {
         (),
     );
 
-    let issuers = (*issuers).clone();
-    let loading = (*loading).clone();
-    (issuers, loading, fetch_issuers)
+    (Rc::clone(&issuers), *loading, fetch_issuers)
 }
 
 #[function_component(IssuerHome)]
@@ -60,7 +59,7 @@ pub fn issuer_home() -> Html {
         <div class="m-8">
             <IssuerList issuers={issuers} loading={loading} />
             <div />
-            <AddIssuer fetch_issuers={fetch_issuers.clone()} />
+            <AddIssuer fetch_issuers={fetch_issuers} />
         </div>
     }
 }

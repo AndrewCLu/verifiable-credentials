@@ -22,7 +22,7 @@ impl fmt::Display for URL {
     }
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Issuer {
     id: URL,
     name: String,
@@ -51,7 +51,7 @@ impl Issuer {
     }
 }
 
-#[derive(Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct VerificationMethod {
     id: URL,
     type_: String,
