@@ -1,5 +1,6 @@
 use super::add_issuer::AddIssuer;
 use super::issuer_list::IssuerList;
+use super::nav_bar::NavBar;
 use crate::constants::BASE_URL;
 use log::error;
 use std::rc::Rc;
@@ -57,6 +58,8 @@ pub fn issuer_home() -> Html {
     let (issuers, loading, fetch_issuers) = use_issuers();
     html! {
         <div class="m-8">
+        <NavBar />
+        <div />
             <IssuerList issuers={issuers} loading={loading} />
             <div />
             <AddIssuer fetch_issuers={fetch_issuers} />
