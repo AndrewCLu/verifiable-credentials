@@ -29,5 +29,7 @@ pub fn issuer_list(props: &IssuerListProps) -> Html {
         html! { <div class="grid grid-cols-4 gap-4">{issuer_list}</div> }
     };
 
-    html! { <div>{content}</div> }
+    html! { <div class = "m-8">
+    <h1 class="text-3xl text-center mb-2">{"All Issuers"}</h1>
+    {content}</div> }
 }

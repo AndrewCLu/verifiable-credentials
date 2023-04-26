@@ -59,14 +59,18 @@ pub fn AddIssuer(props: &AddIssuerProps) -> Html {
     };
 
     html! {
+        <div class="m-8 text-center">
+        <h1 class="text-3xl mb-2">{"Add Issuer"}</h1>
         <form onsubmit={on_submit}>
             <input
+                class="border-slate-300 border-2 rounded p-2 mr-2"
                 type="text"
                 placeholder="Issuer Name"
                 value={(*name).clone()}
                 oninput={handle_input}
             />
-            <button type="submit">{"Submit"}</button>
+            <button class="rounded bg-stone-200 p-2" type="submit">{"Submit"}</button>
         </form>
+        </div>
     }
 }

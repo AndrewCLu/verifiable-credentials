@@ -1,10 +1,10 @@
 use yew::{function_component, html, Html};
 
 #[function_component]
-pub fn Home() -> Html {
+pub fn NotFound() -> Html {
     html! {
         <div class="m-8">
-            {"Home"}
+            {"The page you requested cannot be found."}
         </div>
     }
 }
