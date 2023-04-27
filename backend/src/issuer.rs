@@ -82,22 +82,22 @@ async fn get_all_issuers(
 
 #[derive(Deserialize)]
 struct AddVerificationMethodRequest {
-    issuer_id: String,
     verification_method_id: String,
     type_: String,
     public_key_multibase: String,
 }
 
-#[get("/new_verification_method")]
+#[post("/{id}/verification_method")]
 async fn new_verification_method(
     req: web::Json<AddVerificationMethodRequest>,
+    path: web::Path<String>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
     let mut registry = registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
-    let issuer_id = URL::new(&req.issuer_id).map_err(|_e| {
+    let issuer_id = URL::new(&path.into_inner()).map_err(|_e| {
         error!("Invalid issuer id.");
         UserError::BadRequest
     })?;

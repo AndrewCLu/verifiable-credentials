@@ -46,6 +46,10 @@ impl Issuer {
         &self.name
     }
 
+    pub fn get_verification_methods(&self) -> &Vec<VerificationMethod> {
+        &self.verification_methods
+    }
+
     pub fn new_verification_method(&mut self, verification_method: VerificationMethod) {
         self.verification_methods.push(verification_method);
     }
@@ -55,18 +59,34 @@ impl Issuer {
 pub struct VerificationMethod {
     id: URL,
     type_: String,
-    controller: URL,
+    controller_id: URL,
     public_key_multibase: String,
 }
 
 impl VerificationMethod {
-    pub fn new(id: URL, type_: String, controller: URL, public_key_multibase: String) -> Self {
+    pub fn new(id: URL, type_: String, controller_id: URL, public_key_multibase: String) -> Self {
         Self {
             id,
             type_,
-            controller,
+            controller_id,
             public_key_multibase,
         }
+    }
+
+    pub fn get_id(&self) -> &URL {
+        &self.id
+    }
+
+    pub fn get_type(&self) -> &String {
+        &self.type_
+    }
+
+    pub fn get_controller_id(&self) -> &URL {
+        &self.controller_id
+    }
+
+    pub fn get_public_key_multibase(&self) -> &String {
+        &self.public_key_multibase
     }
 }
 

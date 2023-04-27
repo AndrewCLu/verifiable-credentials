@@ -55,7 +55,6 @@ pub fn AddVerificationMethod(props: &AddVerificationMethodProps) -> Html {
             let fetch_issuer = fetch_issuer.clone();
             let client = client.clone();
             let request_data = json!({
-                "issuer_id": issuer_id,
                 "verification_method_id": Uuid::new_v4().to_string(),
                 "type_": *type_,
                 "public_key_multibase": *key,

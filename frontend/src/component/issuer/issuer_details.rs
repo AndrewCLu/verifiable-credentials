@@ -56,6 +56,23 @@ pub fn issuer_details(props: &IssuerDetailsProps) -> Html {
                         <div class="p-4 border border-gray-200">
                             <h2 class="text-xl font-bold">{issuer.get_name()}</h2>
                             <p class="text-gray-600">{"ID: "}{issuer.get_id()}</p>
+                            <div>
+                                <p class="text-gray-600">{"Verification Methods:"}</p>
+                                <ul>
+                                    {for issuer.get_verification_methods().iter().map(|vm| {
+                                        html! {
+                                            <div class="bg-slate-50 rounded m-2">
+                                                <li>
+                                                    <p class="text-gray-600">{"ID: "} {vm.get_id()}</p>
+                                                    <p class="text-gray-600">{"Type: "} {vm.get_type()}</p>
+                                                    <p class="text-gray-600">{"Issuer ID: "} {vm.get_controller_id()}</p>
+                                                    <p class="text-gray-600">{"Key: "} {vm.get_public_key_multibase()}</p>
+                                                </li>
+                                            </div>
+                                        }
+                                    })}
+                                </ul>
+                            </div>
                         </div>
                         <div>
                             <AddVerificationMethod issuer_id={issuer_id} fetch_issuer={fetch_issuer} />
