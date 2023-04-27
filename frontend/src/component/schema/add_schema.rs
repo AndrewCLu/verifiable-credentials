@@ -41,11 +41,11 @@ pub fn AddSchema(props: &AddSchemaProps) -> Html {
                 "name": *name,
             });
             let future = async move {
-                let url = format!("{}/schema/add_schema", BASE_URL);
+                let url = format!("{}/schema/", BASE_URL);
                 let resp = client.post(url).json(&request_data).send().await;
                 match resp {
                     Ok(resp) => {
-                        debug!("Received response: {:?}", resp);
+                        debug!("Response from adding new schema: {:?}", resp);
                         fetch_schemas.emit(());
                     }
                     Err(e) => {

@@ -41,11 +41,11 @@ pub fn AddIssuer(props: &AddIssuerProps) -> Html {
                 "name": *name,
             });
             let future = async move {
-                let url = format!("{}/issuer/add_issuer", BASE_URL);
+                let url = format!("{}/issuer/", BASE_URL);
                 let resp = client.post(url).json(&request_data).send().await;
                 match resp {
                     Ok(resp) => {
-                        debug!("Received response: {:?}", resp);
+                        debug!("Response from adding new issuer: {:?}", resp);
                         fetch_issuers.emit(());
                     }
                     Err(e) => {

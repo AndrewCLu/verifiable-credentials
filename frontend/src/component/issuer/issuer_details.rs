@@ -1,3 +1,4 @@
+use super::add_verification_method::AddVerificationMethod;
 use crate::component::nav_bar::NavBar;
 use crate::constants::BASE_URL;
 use log::error;
@@ -21,24 +22,30 @@ pub fn issuer_details(props: &IssuerDetailsProps) -> Html {
     let issuer = use_state(|| None);
     let issuer_id = props.issuer_id.clone();
 
+    let issuer_id_clone = issuer_id.clone();
     let issuer_clone = issuer.clone();
-    use_effect_with_deps(
-        move |issuer_id| {
-            let issuer_id = issuer_id.clone();
-            let future = async move {
-                match get_issuer(issuer_id.clone()).await {
-                    Ok(fetched_issuer) => {
-                        issuer_clone.set(Some(fetched_issuer));
-                    }
-                    Err(_) => {
-                        error!("Failed to fetch issuer {}.", issuer_id);
-                    }
+    let fetch_issuer = Callback::from(move |_| {
+        let issuer_id = issuer_id_clone.clone();
+        let issuer = issuer_clone.clone();
+        let future = async move {
+            match get_issuer(issuer_id.clone()).await {
+                Ok(fetched_issuer) => {
+                    issuer.set(Some(fetched_issuer));
                 }
-            };
-            spawn_local(future);
-            || ()
+                Err(_) => {
+                    error!("Failed to fetch issuer {}.", issuer_id);
+                }
+            }
+        };
+        spawn_local(future);
+    });
+
+    let fetch_issuer_clone = fetch_issuer.clone();
+    use_effect_with_deps(
+        move |_| {
+            fetch_issuer_clone.emit(());
         },
-        issuer_id,
+        (),
     );
 
     match (*issuer).clone() {
@@ -49,6 +56,9 @@ pub fn issuer_details(props: &IssuerDetailsProps) -> Html {
                         <div class="p-4 border border-gray-200">
                             <h2 class="text-xl font-bold">{issuer.get_name()}</h2>
                             <p class="text-gray-600">{"ID: "}{issuer.get_id()}</p>
+                        </div>
+                        <div>
+                            <AddVerificationMethod issuer_id={issuer_id} fetch_issuer={fetch_issuer} />
                         </div>
                 </div>
             }

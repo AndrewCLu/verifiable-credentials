@@ -8,7 +8,7 @@ use vc_core::Issuer;
 use yew::{platform::spawn_local, prelude::*};
 
 async fn get_all_issuers() -> Result<Vec<Issuer>, reqwest::Error> {
-    let url = format!("{}/issuer/get_all_issuers", BASE_URL);
+    let url = format!("{}/issuer/", BASE_URL);
     let resp = reqwest::get(url).await?;
     let issuers: Vec<Issuer> = resp.json().await?;
     Ok(issuers)

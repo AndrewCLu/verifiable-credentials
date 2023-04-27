@@ -8,7 +8,7 @@ use vc_core::CredentialSchema;
 use yew::{platform::spawn_local, prelude::*};
 
 async fn get_all_schemas() -> Result<Vec<CredentialSchema>, reqwest::Error> {
-    let url = format!("{}/schema/get_all_schemas", BASE_URL);
+    let url = format!("{}/schema/", BASE_URL);
     let resp = reqwest::get(url).await?;
     let schemas: Vec<CredentialSchema> = resp.json().await?;
     Ok(schemas)
