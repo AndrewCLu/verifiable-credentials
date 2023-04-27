@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -167,6 +168,48 @@ impl CredentialSchema {
     }
 }
 
-pub struct VerifiableCredential {}
+pub enum Claim {
+    Value(String),
+    Map(HashMap<String, Claim>),
+}
 
-pub struct VerifiablePresentation {}
+pub struct CredentialStatus {}
+
+pub struct RefreshService {}
+
+pub struct TermsOfUse {}
+
+pub struct Evidence {}
+
+pub struct Proof {
+    type_: String,
+    created: DateTime<Utc>,
+    verification_method: URL,
+    proof_purpose: String,
+    proof_value: String,
+}
+
+pub struct VerifiableCredential {
+    context: Vec<URL>,
+    id: URL,
+    type_: Vec<URL>,
+    issuer: URL,
+    valid_from: DateTime<Utc>,
+    valid_until: DateTime<Utc>,
+    credential_subject: Vec<Claim>,
+    credential_schema: Vec<CredentialSchema>,
+    proof: Vec<Proof>,
+    credential_status: CredentialStatus,
+    refresh_service: Vec<RefreshService>,
+    terms_of_use: Vec<TermsOfUse>,
+    evidence: Vec<Evidence>,
+}
+
+pub struct VerifiablePresentation {
+    context: Vec<URL>,
+    id: URL,
+    type_: Vec<URL>,
+    verifiable_credential: Vec<VerifiableCredential>,
+    holder: Option<URL>,
+    proof: Vec<Proof>,
+}
