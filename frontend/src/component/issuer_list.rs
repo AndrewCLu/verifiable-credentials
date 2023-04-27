@@ -1,6 +1,8 @@
+use crate::Route;
 use std::rc::Rc;
 use vc_core::Issuer;
 use yew::prelude::*;
+use yew_router::prelude::*;
 
 #[derive(Clone, PartialEq, Properties)]
 pub struct IssuerListProps {
@@ -14,10 +16,14 @@ pub fn issuer_list(props: &IssuerListProps) -> Html {
     let issuer_list = issuers
         .iter()
         .map(|issuer| {
+            let issuer_id = issuer.get_id().get_str().to_string();
             html! {
                 <div class="p-4 border border-gray-200">
+                <Link<Route> to={Route::IssuerDetails {id: issuer_id}}>
                     <h2 class="text-xl font-bold">{issuer.get_name()}</h2>
                     <p class="text-gray-600">{"ID: "}{issuer.get_id()}</p>
+                </Link<Route>>
+
                 </div>
             }
         })

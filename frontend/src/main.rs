@@ -1,32 +1,15 @@
 use log::Level;
+use routes::Route;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
 pub mod component;
 pub mod constants;
-
-#[derive(Clone, Routable, PartialEq)]
-enum Route {
-    #[at("/")]
-    Home,
-    #[at("/issuer")]
-    Issuer,
-    #[not_found]
-    #[at("/404")]
-    NotFound,
-}
-
-fn switch(routes: Route) -> Html {
-    match routes {
-        Route::Home => html! { <component::home::Home /> },
-        Route::Issuer => html! { <component::issuer_home::IssuerHome /> },
-        Route::NotFound => html! { <component::not_found::NotFound /> },
-    }
-}
+pub mod routes;
 
 #[function_component]
 fn App() -> Html {
-    html! { <BrowserRouter> <Switch<Route> render={switch} /> </BrowserRouter> }
+    html! { <BrowserRouter> <Switch<Route> render={routes::switch} /> </BrowserRouter> }
 }
 
 fn main() {
