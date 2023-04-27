@@ -13,8 +13,8 @@ struct AddIssuerRequest {
     name: String,
 }
 
-#[post("/add_issuer")]
-async fn add_issuer(
+#[post("/")]
+async fn new_issuer(
     req: web::Json<AddIssuerRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
@@ -28,7 +28,7 @@ async fn add_issuer(
     })?;
     let issuer = Issuer::new(issuer_id.clone(), req.name.clone());
 
-    registry.add_issuer(issuer).map_err(|e| {
+    registry.new_issuer(issuer).map_err(|e| {
         error!("Error adding issuer {} to registry: {:?}", issuer_id, e);
         UserError::InternalServerError
     })?;
@@ -37,12 +37,33 @@ async fn add_issuer(
     Ok(HttpResponse::Ok().json(issuer_id))
 }
 
+#[get("/{id}")]
+async fn get_issuer(
+    path: web::Path<String>,
+    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+) -> Result<HttpResponse, UserError> {
+    let registry = registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
+    let issuer_id = URL::new(&path.into_inner()).map_err(|_e| {
+        error!("Invalid issuer id.");
+        UserError::BadRequest
+    })?;
+    let issuers = registry.get_issuer(&issuer_id).map_err(|e| {
+        error!("Error getting issuer {} from registry: {:?}", issuer_id, e);
+        UserError::InternalServerError
+    })?;
+
+    Ok(HttpResponse::Ok().json(issuers))
+}
+
 #[derive(Deserialize)]
 pub struct GetAllIssuersRequest {
     limit: Option<usize>,
 }
 
-#[get("/get_all_issuers")]
+#[get("/")]
 async fn get_all_issuers(
     req: web::Query<GetAllIssuersRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
@@ -68,8 +89,8 @@ struct AddVerificationMethodRequest {
     public_key_multibase: String,
 }
 
-#[get("/add_verification_method")]
-async fn add_verification_method(
+#[get("/new_verification_method")]
+async fn new_verification_method(
     req: web::Json<AddVerificationMethodRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
@@ -93,7 +114,7 @@ async fn add_verification_method(
     );
 
     registry
-        .add_verification_method(&issuer_id, verification_method)
+        .new_verification_method(&issuer_id, verification_method)
         .map_err(|e| {
             error!(
                 "Error adding verification method {} to registry: {:?}",
@@ -105,8 +126,8 @@ async fn add_verification_method(
     Ok(HttpResponse::Ok().json(verification_method_id))
 }
 
-#[get("/add_schema")]
-async fn add_schema() -> impl Responder {
+#[get("/new_schema")]
+async fn new_schema() -> impl Responder {
     HttpResponse::Ok().body("Added a schema.")
 }
 
@@ -145,10 +166,11 @@ async fn revoke_credential() -> impl Responder {
 
 pub fn init_routes() -> Scope {
     web::scope("/issuer")
-        .service(add_issuer)
+        .service(new_issuer)
+        .service(get_issuer)
         .service(get_all_issuers)
-        .service(add_verification_method)
-        .service(add_schema)
+        .service(new_verification_method)
+        .service(new_schema)
         .service(get_all_schemas)
         .service(issue_credential)
         .service(revoke_credential)

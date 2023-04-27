@@ -46,7 +46,7 @@ impl Issuer {
         &self.name
     }
 
-    pub fn add_verification_method(&mut self, verification_method: VerificationMethod) {
+    pub fn new_verification_method(&mut self, verification_method: VerificationMethod) {
         self.verification_methods.push(verification_method);
     }
 }

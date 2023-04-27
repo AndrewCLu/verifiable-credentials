@@ -60,7 +60,7 @@ impl VerifiableDataRegistry {
             ))
     }
 
-    pub fn add_issuer(&mut self, issuer: Issuer) -> Result<(), RegistryError> {
+    pub fn new_issuer(&mut self, issuer: Issuer) -> Result<(), RegistryError> {
         let issuer_json = serde_json::to_string(&issuer).map_err(|_e| {
             RegistryError::SerializationError("Could not serialize issuer.".to_string())
         })?;
@@ -151,15 +151,15 @@ impl VerifiableDataRegistry {
             .collect())
     }
 
-    pub fn add_verification_method(
+    pub fn new_verification_method(
         &mut self,
         issuer_id: &URL,
         verification_method: VerificationMethod,
     ) -> Result<(), RegistryError> {
         match self.get_issuer(issuer_id) {
             Ok(Some(mut issuer)) => {
-                issuer.add_verification_method(verification_method);
-                self.add_issuer(issuer)
+                issuer.new_verification_method(verification_method);
+                self.new_issuer(issuer)
             }
             Ok(None) => Err(RegistryError::ArgumentError(format!(
                 "Issuer {} does not exist in the registry.",
@@ -169,7 +169,7 @@ impl VerifiableDataRegistry {
         }
     }
 
-    pub fn add_schema(&mut self, schema: CredentialSchema) -> Result<(), RegistryError> {
+    pub fn new_schema(&mut self, schema: CredentialSchema) -> Result<(), RegistryError> {
         let schema_json = serde_json::to_string(&schema).map_err(|_e| {
             RegistryError::SerializationError("Could not serialize schema.".to_string())
         })?;
