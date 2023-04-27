@@ -1,4 +1,4 @@
-use super::nav_bar::NavBar;
+use crate::component::nav_bar::NavBar;
 use crate::constants::BASE_URL;
 use log::error;
 use vc_core::Issuer;

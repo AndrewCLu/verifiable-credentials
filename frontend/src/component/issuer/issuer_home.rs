@@ -1,6 +1,6 @@
 use super::add_issuer::AddIssuer;
 use super::issuer_list::IssuerList;
-use super::nav_bar::NavBar;
+use crate::component::nav_bar::NavBar;
 use crate::constants::BASE_URL;
 use log::error;
 use std::rc::Rc;

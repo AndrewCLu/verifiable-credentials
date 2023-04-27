@@ -1,5 +1,7 @@
 use crate::component::{
-    home::Home, issuer_details::IssuerDetails, issuer_home::IssuerHome, not_found::NotFound,
+    home::Home,
+    issuer::{issuer_details::IssuerDetails, issuer_home::IssuerHome},
+    not_found::NotFound,
 };
 use yew::prelude::*;
 use yew_router::prelude::*;
