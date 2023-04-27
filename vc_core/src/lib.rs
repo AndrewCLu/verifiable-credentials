@@ -70,14 +70,14 @@ impl VerificationMethod {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum SchemaPropertyType {
     Text,
     Number,
     Boolean,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct SchemaPropertyValue {
     type_: SchemaPropertyType,
     description: String,
@@ -89,14 +89,14 @@ impl SchemaPropertyValue {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum SchemaProperty {
     Value(SchemaPropertyValue),
     Array(Vec<SchemaProperty>),
     Map(HashMap<String, SchemaProperty>),
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct CredentialSchema {
     id: URL,
     type_: String,
@@ -127,6 +127,14 @@ impl CredentialSchema {
 
     pub fn get_id(&self) -> &URL {
         &self.id
+    }
+
+    pub fn get_name(&self) -> &String {
+        &self.name
+    }
+
+    pub fn get_description(&self) -> &String {
+        &self.description
     }
 }
 
