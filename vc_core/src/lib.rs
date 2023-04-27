@@ -102,7 +102,6 @@ pub struct CredentialSchema {
     type_: String,
     name: String,
     description: String,
-    creator_id: URL,
     properties: HashMap<String, SchemaProperty>,
 }
 
@@ -112,7 +111,6 @@ impl CredentialSchema {
         type_: String,
         name: String,
         description: String,
-        creator_id: URL,
         properties: HashMap<String, SchemaProperty>,
     ) -> Self {
         Self {
@@ -120,7 +118,6 @@ impl CredentialSchema {
             type_,
             name,
             description,
-            creator_id,
             properties,
         }
     }

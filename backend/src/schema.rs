@@ -3,8 +3,9 @@ use crate::registry::VerifiableDataRegistry;
 use actix_web::{get, post, web, HttpResponse, Scope};
 use log::{error, info};
 use serde::Deserialize;
+use std::collections::HashMap;
 use std::sync::Mutex;
-use vc_core::{CredentialSchema, URL};
+use vc_core::{CredentialSchema, SchemaProperty, SchemaPropertyType, SchemaPropertyValue, URL};
 
 #[derive(Deserialize)]
 struct AddSchemaRequest {
@@ -25,7 +26,37 @@ async fn new_schema(
         error!("Invalid schema id.");
         UserError::BadRequest
     })?;
-    let schema = CredentialSchema::new(schema_id.clone(), req.name.clone());
+
+    let one = SchemaPropertyValue::new(SchemaPropertyType::Text, "leaf 1 desc".to_string());
+    let two = SchemaPropertyValue::new(SchemaPropertyType::Number, "leaf 2 desc".to_string());
+    let three = SchemaPropertyValue::new(SchemaPropertyType::Boolean, "leaf 3 desc".to_string());
+    let four = SchemaPropertyValue::new(SchemaPropertyType::Text, "leaf 4 desc".to_string());
+    let five = SchemaPropertyValue::new(SchemaPropertyType::Text, "leaf 5 desc".to_string());
+    let mut schema_props = HashMap::<String, SchemaProperty>::new();
+    schema_props.insert("one".to_string(), SchemaProperty::Value(one));
+    let mut three_map = HashMap::<String, SchemaProperty>::new();
+    three_map.insert("three".to_string(), SchemaProperty::Value(three));
+    schema_props.insert(
+        "two".to_string(),
+        SchemaProperty::Array(vec![
+            SchemaProperty::Value(two),
+            SchemaProperty::Map(three_map),
+        ]),
+    );
+    let mut four_five_map = HashMap::<String, SchemaProperty>::new();
+    four_five_map.insert("four".to_string(), SchemaProperty::Value(four));
+    four_five_map.insert(
+        "five".to_string(),
+        SchemaProperty::Array(vec![SchemaProperty::Value(five)]),
+    );
+    schema_props.insert("four".to_string(), SchemaProperty::Map(four_five_map));
+    let schema = CredentialSchema::new(
+        schema_id.clone(),
+        "type".to_string(),
+        req.name.clone(),
+        "desc".to_string(),
+        schema_props,
+    );
 
     registry.new_schema(schema).map_err(|e| {
         error!("Error adding schema {} to registry: {:?}", schema_id, e);
