@@ -189,6 +189,37 @@ impl VerifiableDataRegistry {
         Ok(())
     }
 
+    pub fn get_schema(&self, schema_id: &URL) -> Result<Option<CredentialSchema>, RegistryError> {
+        self.db
+            .get_cf(self.schema_cf()?, schema_id.get_str().as_bytes())
+            .map_err(|_e| {
+                RegistryError::DatabaseError(format!(
+                    "Could not retrieve schema {} from database.",
+                    schema_id
+                ))
+            })
+            .and_then(|maybe_schema_json_bytes| {
+                maybe_schema_json_bytes
+                    .map(|schema_json_bytes| {
+                        String::from_utf8(schema_json_bytes)
+                            .map_err(|_e| {
+                                RegistryError::SerializationError(
+                                    "Could not deserialize schema.".to_string(),
+                                )
+                            })
+                            .and_then(|schema_json| {
+                                serde_json::from_str::<CredentialSchema>(schema_json.as_str())
+                                    .map_err(|_e| {
+                                        RegistryError::SerializationError(
+                                            "Could not deserialize schema.".to_string(),
+                                        )
+                                    })
+                            })
+                    })
+                    .transpose()
+            })
+    }
+
     pub fn get_all_schemas(
         &self,
         limit: Option<usize>,

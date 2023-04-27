@@ -1,11 +1,10 @@
 use super::UserError;
+use crate::registry::VerifiableDataRegistry;
 use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 use log::{error, info};
 use serde::Deserialize;
 use std::sync::Mutex;
 use vc_core::{Issuer, VerificationMethod, URL};
-
-use crate::registry::VerifiableDataRegistry;
 
 #[derive(Deserialize)]
 struct AddIssuerRequest {
@@ -50,12 +49,12 @@ async fn get_issuer(
         error!("Invalid issuer id.");
         UserError::BadRequest
     })?;
-    let issuers = registry.get_issuer(&issuer_id).map_err(|e| {
+    let issuer = registry.get_issuer(&issuer_id).map_err(|e| {
         error!("Error getting issuer {} from registry: {:?}", issuer_id, e);
         UserError::InternalServerError
     })?;
 
-    Ok(HttpResponse::Ok().json(issuers))
+    Ok(HttpResponse::Ok().json(issuer))
 }
 
 #[derive(Deserialize)]
@@ -126,34 +125,6 @@ async fn new_verification_method(
     Ok(HttpResponse::Ok().json(verification_method_id))
 }
 
-#[get("/new_schema")]
-async fn new_schema() -> impl Responder {
-    HttpResponse::Ok().body("Added a schema.")
-}
-
-#[derive(Deserialize)]
-pub struct GetAllSchemasRequest {
-    limit: Option<usize>,
-}
-
-#[get("/get_all_schemas")]
-async fn get_all_schemas(
-    req: web::Query<GetAllSchemasRequest>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
-) -> Result<HttpResponse, UserError> {
-    let registry = registry.lock().map_err(|_e| {
-        error!("Could not lock registry.");
-        UserError::InternalServerError
-    })?;
-    let limit = req.limit;
-    let schemas = registry.get_all_schemas(limit).map_err(|e| {
-        error!("Error getting schemas from registry: {:?}", e);
-        UserError::InternalServerError
-    })?;
-
-    Ok(HttpResponse::Ok().json(schemas))
-}
-
 #[get("/issue_credential")]
 async fn issue_credential() -> impl Responder {
     HttpResponse::Ok().body("Added a credential.")
@@ -170,8 +141,6 @@ pub fn init_routes() -> Scope {
         .service(get_issuer)
         .service(get_all_issuers)
         .service(new_verification_method)
-        .service(new_schema)
-        .service(get_all_schemas)
         .service(issue_credential)
         .service(revoke_credential)
 }
