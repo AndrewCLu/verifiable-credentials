@@ -107,6 +107,14 @@ impl SchemaPropertyValue {
     pub fn new(type_: SchemaPropertyType, description: String) -> Self {
         Self { type_, description }
     }
+
+    pub fn get_type(&self) -> &SchemaPropertyType {
+        &self.type_
+    }
+
+    pub fn get_description(&self) -> &String {
+        &self.description
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
@@ -152,6 +160,10 @@ impl CredentialSchema {
 
     pub fn get_description(&self) -> &String {
         &self.description
+    }
+
+    pub fn get_properties(&self) -> &HashMap<String, SchemaProperty> {
+        &self.properties
     }
 }
 
