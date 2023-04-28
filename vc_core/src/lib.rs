@@ -175,6 +175,12 @@ pub enum Claim {
 
 pub struct CredentialStatus {}
 
+impl CredentialStatus {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 pub struct RefreshService {}
 
 pub struct TermsOfUse {}
@@ -187,6 +193,44 @@ pub struct Proof {
     verification_method: URL,
     proof_purpose: String,
     proof_value: String,
+}
+
+impl Proof {
+    pub fn new(
+        type_: String,
+        created: DateTime<Utc>,
+        verification_method: URL,
+        proof_purpose: String,
+        proof_value: String,
+    ) -> Self {
+        Self {
+            type_,
+            created,
+            verification_method,
+            proof_purpose,
+            proof_value,
+        }
+    }
+
+    pub fn get_type(&self) -> &String {
+        &self.type_
+    }
+
+    pub fn get_created(&self) -> &DateTime<Utc> {
+        &self.created
+    }
+
+    pub fn get_verification_method(&self) -> &URL {
+        &self.verification_method
+    }
+
+    pub fn get_proof_purpose(&self) -> &String {
+        &self.proof_purpose
+    }
+
+    pub fn get_proof_value(&self) -> &String {
+        &self.proof_value
+    }
 }
 
 pub struct VerifiableCredential {
@@ -205,6 +249,92 @@ pub struct VerifiableCredential {
     evidence: Vec<Evidence>,
 }
 
+impl VerifiableCredential {
+    pub fn new(
+        context: Vec<URL>,
+        id: URL,
+        type_: Vec<URL>,
+        issuer: URL,
+        valid_from: DateTime<Utc>,
+        valid_until: DateTime<Utc>,
+        credential_subject: Vec<Claim>,
+        credential_schema: Vec<CredentialSchema>,
+        proof: Vec<Proof>,
+    ) -> Self {
+        let credential_status = CredentialStatus::new();
+        let refresh_service = Vec::new();
+        let terms_of_use = Vec::new();
+        let evidence = Vec::new();
+        Self {
+            context,
+            id,
+            type_,
+            issuer,
+            valid_from,
+            valid_until,
+            credential_subject,
+            credential_schema,
+            proof,
+            credential_status,
+            refresh_service,
+            terms_of_use,
+            evidence,
+        }
+    }
+
+    pub fn get_context(&self) -> &Vec<URL> {
+        &self.context
+    }
+
+    pub fn get_id(&self) -> &URL {
+        &self.id
+    }
+
+    pub fn get_type(&self) -> &Vec<URL> {
+        &self.type_
+    }
+
+    pub fn get_issuer(&self) -> &URL {
+        &self.issuer
+    }
+
+    pub fn get_valid_from(&self) -> &DateTime<Utc> {
+        &self.valid_from
+    }
+
+    pub fn get_valid_until(&self) -> &DateTime<Utc> {
+        &self.valid_until
+    }
+
+    pub fn get_credential_subject(&self) -> &Vec<Claim> {
+        &self.credential_subject
+    }
+
+    pub fn get_credential_schema(&self) -> &Vec<CredentialSchema> {
+        &self.credential_schema
+    }
+
+    pub fn get_proof(&self) -> &Vec<Proof> {
+        &self.proof
+    }
+
+    pub fn get_credential_status(&self) -> &CredentialStatus {
+        &self.credential_status
+    }
+
+    pub fn get_refresh_service(&self) -> &Vec<RefreshService> {
+        &self.refresh_service
+    }
+
+    pub fn get_terms_of_use(&self) -> &Vec<TermsOfUse> {
+        &self.terms_of_use
+    }
+
+    pub fn get_evidence(&self) -> &Vec<Evidence> {
+        &self.evidence
+    }
+}
+
 pub struct VerifiablePresentation {
     context: Vec<URL>,
     id: URL,
@@ -212,4 +342,48 @@ pub struct VerifiablePresentation {
     verifiable_credential: Vec<VerifiableCredential>,
     holder: Option<URL>,
     proof: Vec<Proof>,
+}
+
+impl VerifiablePresentation {
+    pub fn new(
+        context: Vec<URL>,
+        id: URL,
+        type_: Vec<URL>,
+        verifiable_credential: Vec<VerifiableCredential>,
+        holder: Option<URL>,
+        proof: Vec<Proof>,
+    ) -> Self {
+        Self {
+            context,
+            id,
+            type_,
+            verifiable_credential,
+            holder,
+            proof,
+        }
+    }
+
+    pub fn get_context(&self) -> &Vec<URL> {
+        &self.context
+    }
+
+    pub fn get_id(&self) -> &URL {
+        &self.id
+    }
+
+    pub fn get_type(&self) -> &Vec<URL> {
+        &self.type_
+    }
+
+    pub fn get_verifiable_credential(&self) -> &Vec<VerifiableCredential> {
+        &self.verifiable_credential
+    }
+
+    pub fn get_holder(&self) -> &Option<URL> {
+        &self.holder
+    }
+
+    pub fn get_proof(&self) -> &Vec<Proof> {
+        &self.proof
+    }
 }
