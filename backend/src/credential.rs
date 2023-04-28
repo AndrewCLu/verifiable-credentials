@@ -12,15 +12,15 @@ use vc_core::{CredentialSchema, URL};
 #[derive(Deserialize)]
 struct NewCredentialRequest {
     context: Vec<String>,
-    id: String,
+    credential_id: String,
     type_: Vec<String>,
-    issuer: String,
+    issuer_id: String,
     #[serde(with = "ts_seconds")]
     valid_from: DateTime<Utc>,
     #[serde(with = "ts_seconds")]
     valid_until: DateTime<Utc>,
     credential_subject: HashMap<String, String>,
-    credential_schema: Vec<CredentialSchema>,
+    credential_schema_ids: Vec<String>,
 }
 
 #[post("/")]
@@ -28,13 +28,18 @@ async fn new_credential(
     req: web::Json<NewCredentialRequest>,
     registry: web::Data<Mutex<VerifiableDataRegistry>>,
 ) -> Result<HttpResponse, UserError> {
-    let id = URL::new(&req.id).map_err(|_e| {
+    let registry = registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
+
+    let credential_id = URL::new(&req.credential_id).map_err(|_e| {
         error!("Invalid credential id.");
         UserError::BadRequest
     })?;
 
-    info!("Generated new credential for user: {}", id);
-    Ok(HttpResponse::Ok().json(id))
+    info!("Generated new credential for user: {}", credential_id);
+    Ok(HttpResponse::Ok().json(credential_id))
 }
 
 pub fn init_routes() -> Scope {
