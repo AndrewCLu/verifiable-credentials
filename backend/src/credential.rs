@@ -44,8 +44,7 @@ async fn new_credential(
     })?;
 
     let mut context = Vec::new();
-    let req_context = &req.context.clone();
-    for context_url in req_context {
+    for context_url in &req.context.clone() {
         let context_url = URL::new(context_url).map_err(|_e| {
             error!("Invalid context url.");
             UserError::BadRequest
@@ -57,8 +56,7 @@ async fn new_credential(
         UserError::BadRequest
     })?;
     let mut type_ = Vec::new();
-    let req_type = &req.type_.clone();
-    for type_url in req_type {
+    for type_url in &req.type_.clone() {
         let type_url = URL::new(type_url).map_err(|_e| {
             error!("Invalid type url.");
             UserError::BadRequest
@@ -69,10 +67,43 @@ async fn new_credential(
         error!("Invalid issuer id.");
         UserError::BadRequest
     })?;
+    let issuer = registry
+        .get_issuer(&issuer_id)
+        .map_err(|e| {
+            error!("Error getting issuer {} from registry: {:?}", issuer_id, e);
+            UserError::InternalServerError
+        })?
+        .ok_or({
+            error!("Could not find issuer {} in registry.", issuer_id);
+            UserError::BadRequest
+        })?;
     let valid_from = req.valid_from;
     let valid_until = req.valid_until;
     let credential_subject = req.credential_subject.clone();
-    let credential_schema = Vec::new();
+    let mut credential_schema = Vec::new();
+    for credential_schema_id in &req.credential_schema_ids.clone() {
+        let credential_schema_id = URL::new(credential_schema_id).map_err(|_e| {
+            error!("Invalid credential schema id.");
+            UserError::BadRequest
+        })?;
+        let schema = registry
+            .get_schema(&credential_schema_id)
+            .map_err(|e| {
+                error!(
+                    "Error getting credential schema {} from registry: {:?}",
+                    credential_schema_id, e
+                );
+                UserError::InternalServerError
+            })?
+            .ok_or({
+                error!(
+                    "Could not find credential schema {} in registry.",
+                    credential_schema_id
+                );
+                UserError::BadRequest
+            })?;
+        credential_schema.push(schema.get_link());
+    }
     let proof = Vec::new();
 
     let credential = VerifiableCredential::new(
@@ -83,8 +114,8 @@ async fn new_credential(
         valid_from,
         valid_until,
         credential_subject,
-        credential_schema, // TODO
-        proof,             // TODO
+        credential_schema,
+        proof, // TODO
     );
 
     info!("Generated new credential for user: {}", credential_id);
