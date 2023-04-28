@@ -166,6 +166,30 @@ impl CredentialSchema {
     pub fn get_properties(&self) -> &HashMap<String, SchemaProperty> {
         &self.properties
     }
+
+    pub fn get_link(&self) -> CredentialSchemaLink {
+        CredentialSchemaLink::new(self.id.clone(), self.type_.clone())
+    }
+}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct CredentialSchemaLink {
+    id: URL,
+    type_: String,
+}
+
+impl CredentialSchemaLink {
+    pub fn new(id: URL, type_: String) -> Self {
+        Self { id, type_ }
+    }
+
+    pub fn get_id(&self) -> &URL {
+        &self.id
+    }
+
+    pub fn get_type(&self) -> &String {
+        &self.type_
+    }
 }
 
 pub enum Claim {
@@ -241,7 +265,7 @@ pub struct VerifiableCredential {
     valid_from: DateTime<Utc>,
     valid_until: DateTime<Utc>,
     credential_subject: Vec<Claim>,
-    credential_schema: Vec<CredentialSchema>,
+    credential_schema: Vec<CredentialSchemaLink>,
     proof: Vec<Proof>,
     credential_status: CredentialStatus,
     refresh_service: Vec<RefreshService>,
@@ -258,7 +282,7 @@ impl VerifiableCredential {
         valid_from: DateTime<Utc>,
         valid_until: DateTime<Utc>,
         credential_subject: Vec<Claim>,
-        credential_schema: Vec<CredentialSchema>,
+        credential_schema: Vec<CredentialSchemaLink>,
         proof: Vec<Proof>,
     ) -> Self {
         let credential_status = CredentialStatus::new();
@@ -310,7 +334,7 @@ impl VerifiableCredential {
         &self.credential_subject
     }
 
-    pub fn get_credential_schema(&self) -> &Vec<CredentialSchema> {
+    pub fn get_credential_schema(&self) -> &Vec<CredentialSchemaLink> {
         &self.credential_schema
     }
 
