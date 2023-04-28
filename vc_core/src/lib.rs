@@ -192,10 +192,18 @@ impl CredentialSchemaLink {
     }
 }
 
-#[derive(Serialize, Deserialize)]
-pub enum Claim {
-    Value(String),
-    Map(HashMap<String, Claim>),
+#[derive(Clone, Serialize, Deserialize)]
+pub enum ClaimPropertyValue {
+    Text(String),
+    Number(i32),
+    Boolean(bool),
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub enum ClaimProperty {
+    Value(ClaimPropertyValue),
+    Array(Vec<ClaimProperty>),
+    Map(HashMap<String, ClaimProperty>),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -271,7 +279,7 @@ pub struct VerifiableCredential {
     issuer: URL,
     valid_from: DateTime<Utc>,
     valid_until: DateTime<Utc>,
-    credential_subject: Vec<Claim>,
+    credential_subject: HashMap<String, ClaimProperty>,
     credential_schema: Vec<CredentialSchemaLink>,
     proof: Vec<Proof>,
     credential_status: CredentialStatus,
@@ -288,7 +296,7 @@ impl VerifiableCredential {
         issuer: URL,
         valid_from: DateTime<Utc>,
         valid_until: DateTime<Utc>,
-        credential_subject: Vec<Claim>,
+        credential_subject: HashMap<String, ClaimProperty>,
         credential_schema: Vec<CredentialSchemaLink>,
         proof: Vec<Proof>,
     ) -> Self {
@@ -337,7 +345,7 @@ impl VerifiableCredential {
         &self.valid_until
     }
 
-    pub fn get_credential_subject(&self) -> &Vec<Claim> {
+    pub fn get_credential_subject(&self) -> &HashMap<String, ClaimProperty> {
         &self.credential_subject
     }
 

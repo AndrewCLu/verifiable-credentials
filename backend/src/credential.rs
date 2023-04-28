@@ -7,7 +7,7 @@ use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use vc_core::{Proof, VerifiableCredential, VerificationMethod, URL};
+use vc_core::{ClaimProperty, Proof, VerifiableCredential, VerificationMethod, URL};
 
 fn generate_proof(credential: &VerifiableCredential, verification: &VerificationMethod) -> Proof {
     return Proof::new(
@@ -29,7 +29,7 @@ struct NewCredentialRequest {
     valid_from: DateTime<Utc>,
     #[serde(with = "ts_seconds")]
     valid_until: DateTime<Utc>,
-    credential_subject: HashMap<String, String>,
+    credential_subject: HashMap<String, ClaimProperty>,
     credential_schema_ids: Vec<String>,
 }
 
@@ -71,7 +71,7 @@ async fn new_credential(
     })?;
     let valid_from = req.valid_from;
     let valid_until = req.valid_until;
-    let credential_subject = Vec::new();
+    let credential_subject = req.credential_subject.clone();
     let credential_schema = Vec::new();
     let proof = Vec::new();
 
@@ -82,9 +82,9 @@ async fn new_credential(
         issuer_id,
         valid_from,
         valid_until,
-        credential_subject, // TODO
-        credential_schema,  // TODO
-        proof,              // TODO
+        credential_subject,
+        credential_schema, // TODO
+        proof,             // TODO
     );
 
     info!("Generated new credential for user: {}", credential_id);
