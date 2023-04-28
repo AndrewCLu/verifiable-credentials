@@ -172,7 +172,7 @@ impl CredentialSchema {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize)]
 pub struct CredentialSchemaLink {
     id: URL,
     type_: String,
@@ -192,11 +192,22 @@ impl CredentialSchemaLink {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub enum Claim {
     Value(String),
     Map(HashMap<String, Claim>),
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Proof {
+    type_: String,
+    created: DateTime<Utc>,
+    verification_method: URL,
+    proof_purpose: String,
+    proof_value: String,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct CredentialStatus {}
 
 impl CredentialStatus {
@@ -205,19 +216,14 @@ impl CredentialStatus {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct RefreshService {}
 
+#[derive(Serialize, Deserialize)]
 pub struct TermsOfUse {}
 
+#[derive(Serialize, Deserialize)]
 pub struct Evidence {}
-
-pub struct Proof {
-    type_: String,
-    created: DateTime<Utc>,
-    verification_method: URL,
-    proof_purpose: String,
-    proof_value: String,
-}
 
 impl Proof {
     pub fn new(
@@ -257,6 +263,7 @@ impl Proof {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct VerifiableCredential {
     context: Vec<URL>,
     id: URL,
