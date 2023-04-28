@@ -5,6 +5,7 @@ use registry::VerifiableDataRegistry;
 use std::fmt;
 use std::sync::Mutex;
 
+mod credential;
 mod issuer;
 mod registry;
 mod schema;
@@ -61,6 +62,7 @@ async fn main() -> std::io::Result<()> {
             .service(hello_world)
             .service(issuer::init_routes())
             .service(schema::init_routes())
+            .service(credential::init_routes())
             .default_service(web::to(not_found))
     })
     .bind("127.0.0.1:8000")?
