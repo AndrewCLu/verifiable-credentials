@@ -7,17 +7,8 @@ use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use vc_core::{ClaimProperty, Proof, VerifiableCredential, VerificationMethod, URL};
-
-fn generate_proof(credential: &VerifiableCredential, verification: &VerificationMethod) -> Proof {
-    return Proof::new(
-        "proof id".to_string(),
-        Utc::now(),
-        verification.get_id().clone(),
-        "proof purpose".to_string(),
-        "proof_value".to_string(),
-    );
-}
+use vc_core::proof::{CryptographicSuite, ECDSAProof2021, ProofOptions};
+use vc_core::{ClaimProperty, Credential, VerifiableCredential, URL};
 
 #[derive(Deserialize)]
 struct NewCredentialRequest {
@@ -104,9 +95,7 @@ async fn new_credential(
             })?;
         credential_schema.push(schema.get_link());
     }
-    let proof = Vec::new();
-
-    let credential = VerifiableCredential::new(
+    let credential = Credential::new(
         context,
         credential_id.clone(),
         type_,
@@ -115,11 +104,30 @@ async fn new_credential(
         valid_until,
         credential_subject,
         credential_schema,
-        proof, // TODO
     );
+    let cryptographic_suite = ECDSAProof2021::new();
+    let verification_method = issuer.get_verification_methods()[0].clone();
+    let proof_purpose = "Proof Purpose".to_string();
+    let created = Utc::now();
+    let domain = "Proof Domain".to_string();
+    let challenge = "Proof Challenge".to_string();
+    let proof_options = ProofOptions::new(
+        verification_method,
+        proof_purpose,
+        created,
+        domain,
+        challenge,
+    );
+    let proof = cryptographic_suite
+        .generate_proof(&credential, &proof_options)
+        .map_err(|e| {
+            error!("Error generating proof for verifiable credential: {:?}", e);
+            UserError::InternalServerError
+        })?;
+    let verifiable_credential = VerifiableCredential::new(credential, vec![proof]);
 
     info!("Generated new credential for user: {}", credential_id);
-    Ok(HttpResponse::Ok().json(credential))
+    Ok(HttpResponse::Ok().json(verifiable_credential))
 }
 
 pub fn init_routes() -> Scope {

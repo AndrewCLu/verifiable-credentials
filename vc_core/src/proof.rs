@@ -45,7 +45,7 @@ pub trait CryptographicSuite {
 
     fn transform(
         &self,
-        data: &VerifiableCredential,
+        data: &Credential,
         options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError>;
 
@@ -63,7 +63,7 @@ pub trait CryptographicSuite {
 
     fn generate_proof(
         &self,
-        data: &VerifiableCredential,
+        data: &Credential,
         options: &ProofOptions,
     ) -> Result<Proof, ProofGenerationError> {
         let transformed_data = self.transform(data, options)?;
@@ -98,7 +98,7 @@ impl CryptographicSuite for ECDSAProof2021 {
 
     fn transform(
         &self,
-        data: &VerifiableCredential,
+        data: &Credential,
         options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError> {
         Ok(vec![])

@@ -274,7 +274,7 @@ impl Proof {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct VerifiableCredential {
+pub struct Credential {
     context: Vec<URL>,
     id: URL,
     type_: Vec<URL>,
@@ -283,14 +283,13 @@ pub struct VerifiableCredential {
     valid_until: DateTime<Utc>,
     credential_subject: HashMap<String, ClaimProperty>,
     credential_schema: Vec<CredentialSchemaLink>,
-    proof: Vec<Proof>,
     credential_status: CredentialStatus,
     refresh_service: Vec<RefreshService>,
     terms_of_use: Vec<TermsOfUse>,
     evidence: Vec<Evidence>,
 }
 
-impl VerifiableCredential {
+impl Credential {
     pub fn new(
         context: Vec<URL>,
         id: URL,
@@ -300,7 +299,6 @@ impl VerifiableCredential {
         valid_until: DateTime<Utc>,
         credential_subject: HashMap<String, ClaimProperty>,
         credential_schema: Vec<CredentialSchemaLink>,
-        proof: Vec<Proof>,
     ) -> Self {
         let credential_status = CredentialStatus::new();
         let refresh_service = Vec::new();
@@ -315,7 +313,6 @@ impl VerifiableCredential {
             valid_until,
             credential_subject,
             credential_schema,
-            proof,
             credential_status,
             refresh_service,
             terms_of_use,
@@ -355,10 +352,6 @@ impl VerifiableCredential {
         &self.credential_schema
     }
 
-    pub fn get_proof(&self) -> &Vec<Proof> {
-        &self.proof
-    }
-
     pub fn get_credential_status(&self) -> &CredentialStatus {
         &self.credential_status
     }
@@ -373,6 +366,26 @@ impl VerifiableCredential {
 
     pub fn get_evidence(&self) -> &Vec<Evidence> {
         &self.evidence
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct VerifiableCredential {
+    credential: Credential,
+    proof: Vec<Proof>,
+}
+
+impl VerifiableCredential {
+    pub fn new(credential: Credential, proof: Vec<Proof>) -> Self {
+        Self { credential, proof }
+    }
+
+    pub fn get_credential(&self) -> &Credential {
+        &self.credential
+    }
+
+    pub fn get_proof(&self) -> &Vec<Proof> {
+        &self.proof
     }
 }
 
