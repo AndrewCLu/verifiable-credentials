@@ -4,6 +4,8 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 
+pub mod proof;
+
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct URL(String);
 
