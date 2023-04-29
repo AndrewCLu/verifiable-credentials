@@ -21,7 +21,6 @@ pub struct PropertyValueNodeProps {
 
 #[function_component(PropertyValueNode)]
 pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
-    let description = props.schema_value.get_description();
     let schema_type = props.schema_value.get_type();
     let claim_value = props.claim_value.clone();
     let path = props.path.clone();
@@ -30,8 +29,9 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
     match (schema_type, claim_value) {
         (SchemaPropertyType::Text, ClaimPropertyValue::Text(text)) => {
             html! {
-                <div>
+                <>
                     <input
+                        class="border rounded-md"
                         type="text"
                         value={text}
                         oninput={Callback::from(move |e: InputEvent| {
@@ -42,14 +42,14 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
                             update_nested_claim_property.emit((path, ClaimPropertyValue::Text(value)));
                         })}
                     />
-                    {description}
-                </div>
+                </>
             }
         }
         (SchemaPropertyType::Number, ClaimPropertyValue::Number(number)) => {
             html! {
-                <div>
+                <>
                     <input
+                        class="border rounded-md"
                         type="number"
                         value={number.to_string()}
                         oninput={Callback::from(move |e: InputEvent| {
@@ -60,14 +60,14 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
                             update_nested_claim_property.emit((path, ClaimPropertyValue::Number(value)));
                         })}
                     />
-                    {description}
-                </div>
+                </>
             }
         }
         (SchemaPropertyType::Boolean, ClaimPropertyValue::Boolean(boolean)) => {
             html! {
-                <div>
+                <>
                     <input
+                        class="border rounded-md"
                         type="checkbox"
                         checked={boolean}
                         onclick={Callback::from(move |_| {
@@ -75,8 +75,7 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
                             update_nested_claim_property.emit((path, ClaimPropertyValue::Boolean(!boolean)));
                         })}
                     />
-                    {description}
-                </div>
+                </>
             }
         }
         _ => {
@@ -292,7 +291,9 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
                     }
                 })}
                 {"}"}
-                <button type="submit">{"Submit"}</button>
+                <div class="text-center mt-2">
+                    <button class="text-white bg-blue-300 rounded-md p-2" type="submit">{"Submit"}</button>
+                </div>
             </form>
         </div>
     }
