@@ -13,20 +13,20 @@ pub fn credential_home() -> Html {
     let credential = use_state(|| None);
     let set_issuer_id = {
         let issuer_id = issuer_id.clone();
-        Callback::from(move |id: String| {
-            issuer_id.set(Some(id));
+        Callback::from(move |id: Option<String>| {
+            issuer_id.set(id);
         })
     };
     let set_schema_id = {
         let schema_id = schema_id.clone();
-        Callback::from(move |id: String| {
-            schema_id.set(Some(id));
+        Callback::from(move |id: Option<String>| {
+            schema_id.set(id);
         })
     };
     let set_credential = {
         let credential = credential.clone();
-        Callback::from(move |cred: Credential| {
-            credential.set(Some(cred));
+        Callback::from(move |cred: Option<Credential>| {
+            credential.set(cred);
         })
     };
 
@@ -40,7 +40,7 @@ pub fn credential_home() -> Html {
                 } else if issuer_id.is_some() && schema_id.is_some() {
                     <MakeClaims />
                 } else if issuer_id.is_some() {
-                    <SelectSchema set_schema_id={set_schema_id} />
+                    <SelectSchema set_schema_id={set_schema_id} set_issuer_id={set_issuer_id} />
                 } else {
                     <SelectIssuer set_issuer_id={set_issuer_id} />
                 }

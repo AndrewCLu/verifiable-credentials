@@ -3,7 +3,7 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct SelectIssuerProps {
-    pub set_issuer_id: Callback<String>,
+    pub set_issuer_id: Callback<Option<String>>,
 }
 
 #[function_component(SelectIssuer)]
@@ -18,7 +18,7 @@ pub fn select_issuer(props: &SelectIssuerProps) -> Html {
             let set_issuer_id = set_issuer_id.clone();
             html! {
                 <div class="p-4 border border-gray-200">
-                    <button onclick={move |_| set_issuer_id.emit(issuer_id.clone())}>
+                    <button onclick={move |_| set_issuer_id.emit(Some(issuer_id.clone()))}>
                     <h2 class="text-xl font-bold">{issuer.get_name()}</h2>
                     <p class="text-gray-600">{"ID: "}{issuer.get_id()}</p>
                     </button>
@@ -33,7 +33,9 @@ pub fn select_issuer(props: &SelectIssuerProps) -> Html {
         html! { <div class="grid grid-cols-4 gap-4">{issuer_list}</div> }
     };
 
-    html! { <div class = "m-8">
-    <h1 class="text-3xl text-center mb-2">{"Select An Issuer"}</h1>
-    {content}</div> }
+    html! {
+    <div class = "m-8">
+        <h1 class="text-3xl text-center mb-2">{"Select An Issuer"}</h1>
+        {content}
+    </div> }
 }
