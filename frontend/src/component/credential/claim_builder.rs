@@ -1,6 +1,8 @@
 use log::error;
 use log::info;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use vc_core::{
     ClaimProperty, ClaimPropertyValue, Credential, CredentialSchema, SchemaProperty,
     SchemaPropertyType, SchemaPropertyValue,
@@ -118,6 +120,7 @@ pub fn property_node(props: &PropertyNodeProps) -> Html {
                         <ul>
                             {for schema_array.iter().zip(claim_array.iter()).enumerate().map(|(index, (schema_value, claim_value))| {
                                 let mut new_path = path.clone();
+                                let update_nested_claim_property = update_nested_claim_property.clone();
                                 new_path.push(index.to_string());
                                 html! {
                                     <li class="ml-8">
@@ -138,6 +141,7 @@ pub fn property_node(props: &PropertyNodeProps) -> Html {
                         {for schema_map.iter().map(|(key, schema_value)| {
                             let claim_value = claim_map.get(key).expect("Claim property not found.");
                             let mut new_path = path.clone();
+                            let update_nested_claim_property = update_nested_claim_property.clone();
                             new_path.push(key.clone());
                             html! {
                                 <div>
@@ -206,7 +210,11 @@ pub struct ClaimBuilderProps {
 #[function_component(ClaimBuilder)]
 pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
     let schema_properties = &props.schema.get_properties().clone();
-    let claim_tree = use_state(|| build_claim_tree_from_schema(schema_properties));
+    let claim_tree = use_state(|| {
+        Rc::new(RefCell::new(build_claim_tree_from_schema(
+            schema_properties,
+        )))
+    });
     let claim_properties = claim_tree.clone();
 
     let update_nested_claim_property = {
@@ -220,34 +228,42 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
                 let mut schema_property = schema_properties
                     .get(first)
                     .expect("Schema property not found.");
-                let mut claim_property = claim_properties
+                let mut claim_tree = claim_properties.borrow_mut();
+                let mut claim_property = claim_tree
                     .get_mut(first)
                     .expect("Claim property not found.");
                 for key in path.take(path_length - 1) {
-                    match (schema_property, claim_property) {
-                        (
-                            SchemaProperty::Array(schema_array),
-                            ClaimProperty::Array(claim_array),
-                        ) => {
+                    match schema_property {
+                        SchemaProperty::Array(schema_array) => {
                             let index = key.parse::<usize>().expect("Invalid index");
-                            schema_property =
-                                schema_array.get(index).expect("Schema property not found.");
-                            claim_property = claim_array
-                                .get_mut(index)
-                                .expect("Claim property not found.");
+                            if let ClaimProperty::Array(claim_array) = claim_property {
+                                schema_property =
+                                    schema_array.get(index).expect("Schema property not found.");
+                                claim_property = claim_array
+                                    .get_mut(index)
+                                    .expect("Claim property not found.");
+                            } else {
+                                error!("Incompatible schema and claim properties");
+                            }
                         }
-                        (SchemaProperty::Map(schema_map), ClaimProperty::Map(claim_map)) => {
-                            schema_property =
-                                schema_map.get(key).expect("Schema property not found.");
-                            claim_property =
-                                claim_map.get_mut(key).expect("Claim property not found.");
+                        SchemaProperty::Map(schema_map) => {
+                            if let ClaimProperty::Map(claim_map) = claim_property {
+                                schema_property =
+                                    schema_map.get(key).expect("Schema property not found.");
+                                claim_property =
+                                    claim_map.get_mut(key).expect("Claim property not found.");
+                            } else {
+                                error!("Incompatible schema and claim properties");
+                            }
                         }
                         _ => {
                             error!("Incompatible schema and claim properties");
                         }
                     }
                 }
-                *claim_property = ClaimProperty::Value(claim_value);
+                if let ClaimProperty::Value(_) = claim_property {
+                    *claim_property = ClaimProperty::Value(claim_value);
+                }
             },
         )
     };
@@ -260,12 +276,14 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
         })
     };
 
+    let claim_properties_map = claim_properties.borrow();
     html! {
         <div>
             <form onsubmit={on_submit}>
                 {"{"}
                 {for schema_properties.iter().map(|(key, schema_value)| {
-                    let claim_value = claim_properties.get(key).expect("Claim property not found.");
+                    let update_nested_claim_property = update_nested_claim_property.clone();
+                    let claim_value = claim_properties_map.get(key).expect("Claim property not found.");
                     let path = vec![key.clone()];
                     html! {
                         <div class="ml-4">
