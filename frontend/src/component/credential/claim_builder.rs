@@ -1,15 +1,18 @@
-use log::error;
-use log::info;
+use crate::constants::BASE_URL;
+use chrono::Utc;
+use log::{debug, error};
+use serde_json::json;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
+use uuid::Uuid;
 use vc_core::{
     ClaimProperty, ClaimPropertyValue, Credential, CredentialSchema, SchemaProperty,
     SchemaPropertyType, SchemaPropertyValue,
 };
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
-use yew::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Properties, PartialEq)]
 pub struct PropertyValueNodeProps {
@@ -203,6 +206,7 @@ fn build_claim_tree_from_schema(
 #[derive(Properties, Clone, PartialEq)]
 pub struct ClaimBuilderProps {
     pub schema: CredentialSchema,
+    pub issuer_id: String,
     pub set_credential: Callback<Option<Credential>>,
 }
 
@@ -215,6 +219,7 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
         )))
     });
     let claim_properties = claim_tree.clone();
+    let set_credential = props.set_credential.clone();
 
     let update_nested_claim_property = {
         let schema_properties = schema_properties.clone();
@@ -267,11 +272,46 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
         )
     };
 
-    // TODO: Submit credential
+    let issuer_id = props.issuer_id.clone();
+    let schema_id = props.schema.get_id().clone();
     let on_submit = {
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
-            info!("Submitting credential");
+            let context = vec!["https://www.w3.org/ns/credentials/v2".to_string()];
+            let credential_id = Uuid::new_v4().to_string();
+            let type_ = vec!["VerifiableCredential".to_string()];
+            let issuer_id = issuer_id.clone();
+            let valid_from = Utc::now().to_rfc3339();
+            let valid_until = Utc::now().to_rfc3339();
+            let credential_subject = claim_tree.borrow().clone();
+            let schema_id = schema_id.clone();
+            let credential_schema_ids = vec![schema_id];
+            let set_credential = set_credential.clone();
+            let request_data = json!({
+                "context": context,
+                "credential_id": credential_id,
+                "type_": type_,
+                "issuer_id": issuer_id,
+                "valid_from": valid_from,
+                "valid_until": valid_until,
+                "credential_subject": credential_subject,
+                "credential_schema_ids": credential_schema_ids,
+            });
+            let client = reqwest::Client::new();
+            let future = async move {
+                let url = format!("{}/credential/", BASE_URL);
+                let resp = client.post(url).json(&request_data).send().await;
+                match resp {
+                    Ok(resp) => {
+                        debug!("Response from adding new issuer: {:?}", resp);
+                        set_credential.emit(None);
+                    }
+                    Err(e) => {
+                        error!("Error creating new issuer: {:?}", e);
+                    }
+                }
+            };
+            spawn_local(future);
         })
     };
 

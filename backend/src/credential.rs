@@ -1,7 +1,7 @@
 use super::UserError;
 use crate::registry::VerifiableDataRegistry;
 use actix_web::{post, web, HttpResponse, Scope};
-use chrono::{serde::ts_seconds, DateTime, Utc};
+use chrono::{DateTime, Utc};
 use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -15,10 +15,8 @@ struct NewCredentialRequest {
     credential_id: String,
     type_: Vec<String>,
     issuer_id: String,
-    #[serde(with = "ts_seconds")]
-    valid_from: DateTime<Utc>,
-    #[serde(with = "ts_seconds")]
-    valid_until: DateTime<Utc>,
+    valid_from: String,  // Expects a RFC3339 formatted DateTime string
+    valid_until: String, // Expects a RFC3339 formatted DateTime string
     credential_subject: HashMap<String, ClaimProperty>,
     credential_schema_ids: Vec<String>,
 }
@@ -67,8 +65,18 @@ async fn new_credential(
             error!("Could not find issuer {} in registry.", issuer_id);
             UserError::BadRequest
         })?;
-    let valid_from = req.valid_from;
-    let valid_until = req.valid_until;
+    let valid_from = DateTime::parse_from_rfc3339(&req.valid_from)
+        .map_err(|_e| {
+            error!("Invalid valid_from date.");
+            UserError::BadRequest
+        })?
+        .with_timezone(&Utc);
+    let valid_until = DateTime::parse_from_rfc3339(&req.valid_until)
+        .map_err(|_e| {
+            error!("Invalid valid_until date.");
+            UserError::BadRequest
+        })?
+        .with_timezone(&Utc);
     let credential_subject = req.credential_subject.clone();
     let mut credential_schema = Vec::new();
     for credential_schema_id in &req.credential_schema_ids.clone() {
@@ -98,14 +106,19 @@ async fn new_credential(
         context,
         credential_id.clone(),
         type_,
-        issuer_id,
+        issuer_id.clone(),
         valid_from,
         valid_until,
         credential_subject,
         credential_schema,
     );
     let cryptographic_suite = ECDSAProof2021::new();
-    let verification_method = issuer.get_verification_methods()[0].clone();
+    let issuer_verification_methods = issuer.get_verification_methods();
+    if issuer_verification_methods.is_empty() {
+        error!("Issuer {} has no verification methods.", issuer_id);
+        return Err(UserError::InternalServerError);
+    }
+    let verification_method = issuer_verification_methods[0].clone();
     let proof_purpose = "Proof Purpose".to_string();
     let created = Utc::now();
     let domain = "Proof Domain".to_string();

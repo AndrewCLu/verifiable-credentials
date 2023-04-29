@@ -16,6 +16,7 @@ pub fn make_claims(props: &MakeClaimsProps) -> Html {
     let schema = &props.schema;
     let set_credential = props.set_credential.clone();
     let set_schema = props.set_schema.clone();
+    let issuer_id = issuer.get_id().get_str().to_string().clone();
 
     let content = html! {
         <div>
@@ -32,7 +33,7 @@ pub fn make_claims(props: &MakeClaimsProps) -> Html {
             </div>
             <div class="p-4 border border-gray-200 mt-2">
                 <div>{"Claims: "}</div>
-                <ClaimBuilder schema={schema.clone()} set_credential={set_credential} />
+                <ClaimBuilder schema={schema.clone()} issuer_id={issuer_id} set_credential={set_credential} />
             </div>
         </div>
     };
