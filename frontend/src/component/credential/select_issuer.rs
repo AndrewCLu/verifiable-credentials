@@ -2,12 +2,12 @@ use crate::component::issuer::issuer_home::use_issuers;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
-pub struct SetIssuerProps {
+pub struct SelectIssuerProps {
     pub set_issuer_id: Callback<String>,
 }
 
 #[function_component(SelectIssuer)]
-pub fn select_issuer(props: &SetIssuerProps) -> Html {
+pub fn select_issuer(props: &SelectIssuerProps) -> Html {
     let (issuers, loading, _) = use_issuers();
     let set_issuer_id = props.set_issuer_id.clone();
 

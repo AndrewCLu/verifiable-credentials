@@ -40,7 +40,7 @@ pub fn credential_home() -> Html {
                 } else if issuer_id.is_some() && schema_id.is_some() {
                     <MakeClaims />
                 } else if issuer_id.is_some() {
-                    <SelectSchema />
+                    <SelectSchema set_schema_id={set_schema_id} />
                 } else {
                     <SelectIssuer set_issuer_id={set_issuer_id} />
                 }
