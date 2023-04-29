@@ -53,7 +53,6 @@ pub fn use_schemas() -> (Rc<Vec<CredentialSchema>>, bool, Callback<()>) {
 }
 
 #[function_component(SchemaHome)]
-
 pub fn schema_home() -> Html {
     let (schemas, loading, fetch_schemas) = use_schemas();
     html! {

@@ -1,3 +1,4 @@
+pub mod credential;
 pub mod home;
 pub mod issuer;
 pub mod nav_bar;
