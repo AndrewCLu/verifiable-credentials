@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{serde::ts_seconds, DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::error::Error;
@@ -279,7 +279,9 @@ pub struct Credential {
     id: URL,
     type_: Vec<URL>,
     issuer: URL,
+    #[serde(with = "ts_seconds")]
     valid_from: DateTime<Utc>,
+    #[serde(with = "ts_seconds")]
     valid_until: DateTime<Utc>,
     credential_subject: HashMap<String, ClaimProperty>,
     credential_schema: Vec<CredentialSchemaLink>,

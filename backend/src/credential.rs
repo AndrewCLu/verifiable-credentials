@@ -1,8 +1,7 @@
 use super::UserError;
 use crate::registry::VerifiableDataRegistry;
 use actix_web::{post, web, HttpResponse, Scope};
-use chrono::serde::ts_seconds;
-use chrono::{DateTime, Utc};
+use chrono::{serde::ts_seconds, DateTime, Utc};
 use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
