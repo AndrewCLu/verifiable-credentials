@@ -174,7 +174,7 @@ impl CredentialSchema {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct CredentialSchemaLink {
     id: URL,
     type_: String,
@@ -217,7 +217,7 @@ pub struct Proof {
     proof_value: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct CredentialStatus {}
 
 impl CredentialStatus {
@@ -226,13 +226,13 @@ impl CredentialStatus {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct RefreshService {}
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct TermsOfUse {}
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evidence {}
 
 impl Proof {
@@ -273,7 +273,7 @@ impl Proof {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Credential {
     context: Vec<URL>,
     id: URL,
