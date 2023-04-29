@@ -1,3 +1,4 @@
+use super::claim_builder::ClaimBuilder;
 use vc_core::{Credential, CredentialSchema, Issuer};
 use yew::prelude::*;
 
@@ -13,6 +14,7 @@ pub struct MakeClaimsProps {
 pub fn make_claims(props: &MakeClaimsProps) -> Html {
     let issuer = &props.issuer;
     let schema = &props.schema;
+    let set_credential = props.set_credential.clone();
     let set_schema = props.set_schema.clone();
 
     let content = html! {
@@ -27,6 +29,10 @@ pub fn make_claims(props: &MakeClaimsProps) -> Html {
                 <h2 class="text-xl font-bold">{schema.get_name()}</h2>
                 <p class="text-gray-300">{"ID: "}{schema.get_id()}</p>
                 <p class="text-gray-300">{"Description: "}{schema.get_description()}</p>
+            </div>
+            <div class="p-4 border border-gray-200 mt-2">
+                <div>{"Claims: "}</div>
+                <ClaimBuilder schema={schema.clone()} set_credential={set_credential} />
             </div>
         </div>
     };

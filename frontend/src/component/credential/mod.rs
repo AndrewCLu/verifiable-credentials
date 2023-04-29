@@ -1,3 +1,4 @@
+pub mod claim_builder;
 pub mod credential_home;
 pub mod display_credential;
 pub mod make_claims;

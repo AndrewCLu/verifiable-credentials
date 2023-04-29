@@ -57,7 +57,7 @@ pub fn schema_property_node(props: &SchemaPropertyNodeProps) -> Html {
         SchemaProperty::Value(value) => {
             html! {
                 <>
-                <SchemaPropertyValueNode property={value} /> {","}
+                    <SchemaPropertyValueNode property={value} /> {","}
                 </>
             }
         }
@@ -81,18 +81,18 @@ pub fn schema_property_node(props: &SchemaPropertyNodeProps) -> Html {
         SchemaProperty::Map(map) => {
             html! {
                 <>
-                {"{"}
-                <div class="ml-8">
-                    {for map.iter().map(|(key, value)| {
-                        html! {
-                            <div>
-                                {"\""} {key} {"\": "}
-                                <SchemaPropertyNode property={value.clone()} />
-                            </div>
-                        }
-                    })}
-                </div>
-                {"},"}
+                    {"{"}
+                    <div class="ml-8">
+                        {for map.iter().map(|(key, value)| {
+                            html! {
+                                <div>
+                                    {"\""} {key} {"\": "}
+                                    <SchemaPropertyNode property={value.clone()} />
+                                </div>
+                            }
+                        })}
+                    </div>
+                    {"},"}
                 </>
             }
         }
@@ -172,7 +172,7 @@ pub fn schema_details(props: &SchemaDetailsProps) -> Html {
                 <div class="m-8">
                     <NavBar />
                     <div>
-                    {"Unable to fetch schema."}
+                        {"Unable to fetch schema."}
                     </div>
                 </div>
             }

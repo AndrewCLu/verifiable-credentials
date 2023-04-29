@@ -194,14 +194,14 @@ impl CredentialSchemaLink {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum ClaimPropertyValue {
     Text(String),
     Number(i32),
     Boolean(bool),
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum ClaimProperty {
     Value(ClaimPropertyValue),
     Array(Vec<ClaimProperty>),
