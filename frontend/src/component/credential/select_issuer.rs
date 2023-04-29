@@ -1,24 +1,25 @@
 use crate::component::issuer::issuer_home::use_issuers;
+use vc_core::Issuer;
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct SelectIssuerProps {
-    pub set_issuer_id: Callback<Option<String>>,
+    pub set_issuer: Callback<Option<Issuer>>,
 }
 
 #[function_component(SelectIssuer)]
 pub fn select_issuer(props: &SelectIssuerProps) -> Html {
     let (issuers, loading, _) = use_issuers();
-    let set_issuer_id = props.set_issuer_id.clone();
+    let set_issuer = props.set_issuer.clone();
 
     let issuer_list = issuers
         .iter()
         .map(|issuer| {
-            let issuer_id = issuer.get_id().get_str().to_string();
-            let set_issuer_id = set_issuer_id.clone();
+            let issuer_clone = issuer.clone();
+            let set_issuer = set_issuer.clone();
             html! {
                 <div class="p-4 border border-gray-200">
-                    <button onclick={move |_| set_issuer_id.emit(Some(issuer_id.clone()))}>
+                    <button onclick={move |_| set_issuer.emit(Some(issuer_clone.clone()))}>
                     <h2 class="text-xl font-bold">{issuer.get_name()}</h2>
                     <p class="text-gray-600">{"ID: "}{issuer.get_id()}</p>
                     </button>

@@ -3,30 +3,30 @@ use super::{
     select_schema::SelectSchema,
 };
 use crate::component::nav_bar::NavBar;
-use vc_core::Credential;
+use vc_core::{Credential, CredentialSchema, Issuer};
 use yew::prelude::*;
 
 #[function_component(CredentialHome)]
 pub fn credential_home() -> Html {
-    let issuer_id = use_state(|| None);
-    let schema_id = use_state(|| None);
+    let issuer = use_state(|| None);
+    let schema = use_state(|| None);
     let credential = use_state(|| None);
-    let set_issuer_id = {
-        let issuer_id = issuer_id.clone();
-        Callback::from(move |id: Option<String>| {
-            issuer_id.set(id);
+    let set_issuer = {
+        let issuer_clone = issuer.clone();
+        Callback::from(move |issuer: Option<Issuer>| {
+            issuer_clone.set(issuer);
         })
     };
-    let set_schema_id = {
-        let schema_id = schema_id.clone();
-        Callback::from(move |id: Option<String>| {
-            schema_id.set(id);
+    let set_schema = {
+        let schema_clone = schema.clone();
+        Callback::from(move |schema: Option<CredentialSchema>| {
+            schema_clone.set(schema);
         })
     };
     let set_credential = {
-        let credential = credential.clone();
-        Callback::from(move |cred: Option<Credential>| {
-            credential.set(cred);
+        let credential_clone = credential.clone();
+        Callback::from(move |credential: Option<Credential>| {
+            credential_clone.set(credential);
         })
     };
 
@@ -37,12 +37,12 @@ pub fn credential_home() -> Html {
             {html! {
                 if credential.is_some() {
                     <DisplayCredential />
-                } else if issuer_id.is_some() && schema_id.is_some() {
-                    <MakeClaims />
-                } else if issuer_id.is_some() {
-                    <SelectSchema set_schema_id={set_schema_id} set_issuer_id={set_issuer_id} />
+                } else if issuer.is_some() && schema.is_some() {
+                    <MakeClaims issuer={(*issuer.as_ref().unwrap()).clone()} schema={(*schema.as_ref().unwrap()).clone()} set_credential={set_credential} set_schema={set_schema} />
+                } else if issuer.is_some() {
+                    <SelectSchema issuer={(*issuer.as_ref().unwrap()).clone()} set_schema={set_schema} set_issuer={set_issuer} />
                 } else {
-                    <SelectIssuer set_issuer_id={set_issuer_id} />
+                    <SelectIssuer set_issuer={set_issuer} />
                 }
             }}
         </div>
