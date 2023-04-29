@@ -1,4 +1,5 @@
 use log::error;
+use log::info;
 use std::collections::HashMap;
 use vc_core::{
     ClaimProperty, ClaimPropertyValue, Credential, CredentialSchema, SchemaProperty,
@@ -10,30 +11,80 @@ use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct PropertyValueNodeProps {
-    pub schema_property: SchemaPropertyValue,
-    pub claim_property: ClaimPropertyValue,
+    pub schema_value: SchemaPropertyValue,
+    pub claim_value: ClaimPropertyValue,
     pub path: Vec<String>,
-    pub update_nested_claim_property: Callback<(ClaimPropertyValue, Vec<String>)>,
+    pub update_nested_claim_property: Callback<(Vec<String>, ClaimPropertyValue)>,
 }
 
 #[function_component(PropertyValueNode)]
 pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
-    let description = props.schema_property.get_description();
+    let description = props.schema_value.get_description();
+    let schema_type = props.schema_value.get_type();
+    let claim_value = props.claim_value.clone();
+    let path = props.path.clone();
+    let update_nested_claim_property = props.update_nested_claim_property.clone();
 
-    html! {
-        <div>
-            <input
-                type="text"
-                oninput={Callback::from(move |e: InputEvent| {
-                    let target: Option<EventTarget> = e.target();
-                    let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
-                    form_data_clone.set_with(move |data| {
-                        // Set the value in the nested structure using the path
-                        update_nested_claim_property(data, &current_path, input);
-                    });
-                })}
-            />
-        </div>
+    match (schema_type, claim_value) {
+        (SchemaPropertyType::Text, ClaimPropertyValue::Text(text)) => {
+            html! {
+                <div>
+                    <input
+                        type="text"
+                        value={text}
+                        oninput={Callback::from(move |e: InputEvent| {
+                            let path = path.clone();
+                            let target: Option<EventTarget> = e.target();
+                            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+                            let value = input.expect("No claim input found.").value();
+                            update_nested_claim_property.emit((path, ClaimPropertyValue::Text(value)));
+                        })}
+                    />
+                    {description}
+                </div>
+            }
+        }
+        (SchemaPropertyType::Number, ClaimPropertyValue::Number(number)) => {
+            html! {
+                <div>
+                    <input
+                        type="number"
+                        value={number.to_string()}
+                        oninput={Callback::from(move |e: InputEvent| {
+                            let path = path.clone();
+                            let target: Option<EventTarget> = e.target();
+                            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
+                            let value = input.expect("No claim input found.").value().parse::<i32>().expect("Input must be a number.");
+                            update_nested_claim_property.emit((path, ClaimPropertyValue::Number(value)));
+                        })}
+                    />
+                    {description}
+                </div>
+            }
+        }
+        (SchemaPropertyType::Boolean, ClaimPropertyValue::Boolean(boolean)) => {
+            html! {
+                <div>
+                    <input
+                        type="checkbox"
+                        checked={boolean}
+                        onclick={Callback::from(move |_| {
+                            let path = path.clone();
+                            update_nested_claim_property.emit((path, ClaimPropertyValue::Boolean(!boolean)));
+                        })}
+                    />
+                    {description}
+                </div>
+            }
+        }
+        _ => {
+            error!("Schema type and claim value type do not match.");
+            html! {
+                <div>
+                    {"Schema type and claim value type do not match."}
+                </div>
+            }
+        }
     }
 }
 
@@ -41,18 +92,22 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
 pub struct PropertyNodeProps {
     pub schema_property: SchemaProperty,
     pub claim_property: ClaimProperty,
+    pub path: Vec<String>,
+    pub update_nested_claim_property: Callback<(Vec<String>, ClaimPropertyValue)>,
 }
 
 #[function_component(PropertyNode)]
 pub fn property_node(props: &PropertyNodeProps) -> Html {
     let schema_property = props.schema_property.clone();
     let claim_property = props.claim_property.clone();
+    let path = props.path.clone();
+    let update_nested_claim_property = props.update_nested_claim_property.clone();
 
     match (schema_property, claim_property) {
         (SchemaProperty::Value(schema_value), ClaimProperty::Value(claim_value)) => {
             html! {
                 <>
-                    <PropertyValueNode schema_property={schema_value} claim_property={claim_value} /> {","}
+                    <PropertyValueNode schema_value={schema_value} claim_value={claim_value} path={path} update_nested_claim_property={update_nested_claim_property} /> {","}
                 </>
             }
         }
@@ -61,10 +116,12 @@ pub fn property_node(props: &PropertyNodeProps) -> Html {
                 <>
                     {"["}
                         <ul>
-                            {for schema_array.iter().zip(claim_array.iter()).map(|(schema_value, claim_value)| {
+                            {for schema_array.iter().zip(claim_array.iter()).enumerate().map(|(index, (schema_value, claim_value))| {
+                                let mut new_path = path.clone();
+                                new_path.push(index.to_string());
                                 html! {
                                     <li class="ml-8">
-                                        <PropertyNode schema_property={schema_value.clone()} claim_property={claim_value.clone()} />
+                                        <PropertyNode schema_property={schema_value.clone()} claim_property={claim_value.clone()} path={new_path} update_nested_claim_property={update_nested_claim_property} />
                                     </li>
                                 }
                             })}
@@ -80,10 +137,12 @@ pub fn property_node(props: &PropertyNodeProps) -> Html {
                     <div class="ml-8">
                         {for schema_map.iter().map(|(key, schema_value)| {
                             let claim_value = claim_map.get(key).expect("Claim property not found.");
+                            let mut new_path = path.clone();
+                            new_path.push(key.clone());
                             html! {
                                 <div>
                                     {"\""} {key} {"\": "}
-                                    <PropertyNode schema_property={schema_value.clone()} claim_property={claim_value.clone()} />
+                                    <PropertyNode schema_property={schema_value.clone()} claim_property={claim_value.clone()} path={new_path} update_nested_claim_property={update_nested_claim_property} />
                                 </div>
                             }
                         })}
@@ -99,27 +158,15 @@ pub fn property_node(props: &PropertyNodeProps) -> Html {
     }
 }
 
-// Helper function to update the nested ClaimProperty based on the path and the input value
-fn update_nested_claim_property(claim_property: &mut ClaimProperty, path: &[String], value: &str) {
-    if let Some((head, tail)) = path.split_first() {
-        match claim_property {
-            ClaimProperty::Map(map) => {
-                if let Some(entry) = map.get_mut(head) {
-                    update_nested_claim_property(entry, tail, value);
-                }
-            }
-            // Add cases for Array if needed
-            _ => {}
-        }
-    } else {
-        // Set the value at the current node
-        *claim_property = ClaimProperty::Value(ClaimPropertyValue::Text(value.to_string()));
-    }
-}
-
 fn build_claim_tree_from_schema_property(property: &SchemaProperty) -> ClaimProperty {
     match property {
-        SchemaProperty::Value(value) => ClaimProperty::Value(value.get_default_value()),
+        SchemaProperty::Value(value) => match value.get_type() {
+            SchemaPropertyType::Text => {
+                ClaimProperty::Value(ClaimPropertyValue::Text("".to_string()))
+            }
+            SchemaPropertyType::Number => ClaimProperty::Value(ClaimPropertyValue::Number(0)),
+            SchemaPropertyType::Boolean => ClaimProperty::Value(ClaimPropertyValue::Boolean(false)),
+        },
         SchemaProperty::Map(map) => {
             let mut claim_tree = HashMap::new();
             for (key, property) in map.iter() {
@@ -159,18 +206,57 @@ pub struct ClaimBuilderProps {
 #[function_component(ClaimBuilder)]
 pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
     let schema_properties = &props.schema.get_properties().clone();
-    let form_data = use_state(|| {
-        build_claim_tree_from_schema(schema_properties);
-    });
-    let form_data_clone = form_data.clone();
-    let claim_properties = (*form_data).clone();
+    let claim_tree = use_state(|| build_claim_tree_from_schema(schema_properties));
+    let claim_properties = claim_tree.clone();
+
+    let update_nested_claim_property = {
+        let schema_properties = schema_properties.clone();
+        let claim_properties = claim_properties.clone();
+        Callback::from(
+            move |(path, claim_value): (Vec<String>, ClaimPropertyValue)| {
+                let mut path = path.iter();
+                let path_length = path.len();
+                let first = path.next().expect("First path element not found.");
+                let mut schema_property = schema_properties
+                    .get(first)
+                    .expect("Schema property not found.");
+                let mut claim_property = claim_properties
+                    .get_mut(first)
+                    .expect("Claim property not found.");
+                for key in path.take(path_length - 1) {
+                    match (schema_property, claim_property) {
+                        (
+                            SchemaProperty::Array(schema_array),
+                            ClaimProperty::Array(claim_array),
+                        ) => {
+                            let index = key.parse::<usize>().expect("Invalid index");
+                            schema_property =
+                                schema_array.get(index).expect("Schema property not found.");
+                            claim_property = claim_array
+                                .get_mut(index)
+                                .expect("Claim property not found.");
+                        }
+                        (SchemaProperty::Map(schema_map), ClaimProperty::Map(claim_map)) => {
+                            schema_property =
+                                schema_map.get(key).expect("Schema property not found.");
+                            claim_property =
+                                claim_map.get_mut(key).expect("Claim property not found.");
+                        }
+                        _ => {
+                            error!("Incompatible schema and claim properties");
+                        }
+                    }
+                }
+                *claim_property = ClaimProperty::Value(claim_value);
+            },
+        )
+    };
 
     // TODO: Submit credential
     let on_submit = {
-        let on_submit = props.on_submit.clone();
-        Callback::from(move |event: yew::events::Submit| {
-            event.prevent_default();
-            on_submit.emit(form_data_clone.get().clone());
+        Callback::from(move |e: SubmitEvent| {
+            e.prevent_default();
+            info!("Submitting credential");
         })
     };
 
@@ -180,9 +266,10 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
                 {"{"}
                 {for schema_properties.iter().map(|(key, schema_value)| {
                     let claim_value = claim_properties.get(key).expect("Claim property not found.");
+                    let path = vec![key.clone()];
                     html! {
                         <div class="ml-4">
-                            {"\""} {key} {"\": "} <PropertyNode schema_property={schema_value.clone()} claim_property={claim_value.clone()} />
+                            {"\""} {key} {"\": "} <PropertyNode schema_property={schema_value.clone()} claim_property={claim_value.clone()} path={path} update_nested_claim_property={update_nested_claim_property} />
                         </div>
                     }
                 })}
