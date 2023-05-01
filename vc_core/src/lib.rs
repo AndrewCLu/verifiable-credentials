@@ -94,7 +94,7 @@ impl VerificationMethod {
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
-pub enum SchemaPropertyType {
+pub enum SchemaPropertyValueType {
     Text,
     Number,
     Boolean,
@@ -102,16 +102,16 @@ pub enum SchemaPropertyType {
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct SchemaPropertyValue {
-    type_: SchemaPropertyType,
+    type_: SchemaPropertyValueType,
     description: String,
 }
 
 impl SchemaPropertyValue {
-    pub fn new(type_: SchemaPropertyType, description: String) -> Self {
+    pub fn new(type_: SchemaPropertyValueType, description: String) -> Self {
         Self { type_, description }
     }
 
-    pub fn get_type(&self) -> &SchemaPropertyType {
+    pub fn get_type(&self) -> &SchemaPropertyValueType {
         &self.type_
     }
 

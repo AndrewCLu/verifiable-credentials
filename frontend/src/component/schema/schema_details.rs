@@ -2,7 +2,7 @@ use crate::component::nav_bar::NavBar;
 use crate::constants::BASE_URL;
 use log::error;
 use std::collections::HashMap;
-use vc_core::{CredentialSchema, SchemaProperty, SchemaPropertyType, SchemaPropertyValue};
+use vc_core::{CredentialSchema, SchemaProperty, SchemaPropertyValue, SchemaPropertyValueType};
 use yew::{platform::spawn_local, prelude::*};
 
 async fn get_schema(schema_id: String) -> Result<CredentialSchema, reqwest::Error> {
@@ -21,21 +21,21 @@ pub struct SchemaPropertyValueNodeProps {
 pub fn schema_property_value_node(props: &SchemaPropertyValueNodeProps) -> Html {
     let description = props.property.get_description();
     match props.property.get_type() {
-        SchemaPropertyType::Text => {
+        SchemaPropertyValueType::Text => {
             html!(
                 <>
                     {"(Text) "} {description}
                 </>
             )
         }
-        SchemaPropertyType::Number => {
+        SchemaPropertyValueType::Number => {
             html!(
                 <>
                     {"(Number) "} {description}
                 </>
             )
         }
-        SchemaPropertyType::Boolean => {
+        SchemaPropertyValueType::Boolean => {
             html!(
                 <>
                     {"(Boolean) "} {description}

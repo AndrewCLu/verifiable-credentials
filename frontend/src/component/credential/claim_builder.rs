@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use uuid::Uuid;
 use vc_core::{
-    ClaimProperty, ClaimPropertyValue, CredentialSchema, SchemaProperty, SchemaPropertyType,
-    SchemaPropertyValue, VerifiableCredential,
+    ClaimProperty, ClaimPropertyValue, CredentialSchema, SchemaProperty, SchemaPropertyValue,
+    SchemaPropertyValueType, VerifiableCredential,
 };
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
@@ -30,7 +30,7 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
     let update_nested_claim_property = props.update_nested_claim_property.clone();
 
     match (schema_type, claim_value) {
-        (SchemaPropertyType::Text, ClaimPropertyValue::Text(text)) => {
+        (SchemaPropertyValueType::Text, ClaimPropertyValue::Text(text)) => {
             html! {
                 <>
                     <input
@@ -48,7 +48,7 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
                 </>
             }
         }
-        (SchemaPropertyType::Number, ClaimPropertyValue::Number(number)) => {
+        (SchemaPropertyValueType::Number, ClaimPropertyValue::Number(number)) => {
             html! {
                 <>
                     <input
@@ -66,7 +66,7 @@ pub fn property_value_node(props: &PropertyValueNodeProps) -> Html {
                 </>
             }
         }
-        (SchemaPropertyType::Boolean, ClaimPropertyValue::Boolean(boolean)) => {
+        (SchemaPropertyValueType::Boolean, ClaimPropertyValue::Boolean(boolean)) => {
             html! {
                 <>
                     <input
@@ -167,11 +167,13 @@ pub fn property_node(props: &PropertyNodeProps) -> Html {
 fn build_claim_tree_from_schema_property(property: &SchemaProperty) -> ClaimProperty {
     match property {
         SchemaProperty::Value(value) => match value.get_type() {
-            SchemaPropertyType::Text => {
+            SchemaPropertyValueType::Text => {
                 ClaimProperty::Value(ClaimPropertyValue::Text("".to_string()))
             }
-            SchemaPropertyType::Number => ClaimProperty::Value(ClaimPropertyValue::Number(0)),
-            SchemaPropertyType::Boolean => ClaimProperty::Value(ClaimPropertyValue::Boolean(false)),
+            SchemaPropertyValueType::Number => ClaimProperty::Value(ClaimPropertyValue::Number(0)),
+            SchemaPropertyValueType::Boolean => {
+                ClaimProperty::Value(ClaimPropertyValue::Boolean(false))
+            }
         },
         SchemaProperty::Map(map) => {
             let mut claim_tree = HashMap::new();

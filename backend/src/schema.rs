@@ -5,7 +5,9 @@ use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use vc_core::{CredentialSchema, SchemaProperty, SchemaPropertyType, SchemaPropertyValue, URL};
+use vc_core::{
+    CredentialSchema, SchemaProperty, SchemaPropertyValue, SchemaPropertyValueType, URL,
+};
 
 #[derive(Deserialize)]
 struct AddSchemaRequest {
@@ -27,11 +29,12 @@ async fn new_schema(
         UserError::BadRequest
     })?;
 
-    let one = SchemaPropertyValue::new(SchemaPropertyType::Text, "leaf 1 desc".to_string());
-    let two = SchemaPropertyValue::new(SchemaPropertyType::Number, "leaf 2 desc".to_string());
-    let three = SchemaPropertyValue::new(SchemaPropertyType::Boolean, "leaf 3 desc".to_string());
-    let four = SchemaPropertyValue::new(SchemaPropertyType::Text, "leaf 4 desc".to_string());
-    let five = SchemaPropertyValue::new(SchemaPropertyType::Text, "leaf 5 desc".to_string());
+    let one = SchemaPropertyValue::new(SchemaPropertyValueType::Text, "leaf 1 desc".to_string());
+    let two = SchemaPropertyValue::new(SchemaPropertyValueType::Number, "leaf 2 desc".to_string());
+    let three =
+        SchemaPropertyValue::new(SchemaPropertyValueType::Boolean, "leaf 3 desc".to_string());
+    let four = SchemaPropertyValue::new(SchemaPropertyValueType::Text, "leaf 4 desc".to_string());
+    let five = SchemaPropertyValue::new(SchemaPropertyValueType::Text, "leaf 5 desc".to_string());
     let mut schema_props = HashMap::<String, SchemaProperty>::new();
     schema_props.insert("one".to_string(), SchemaProperty::Value(one));
     let mut three_map = HashMap::<String, SchemaProperty>::new();
