@@ -61,7 +61,7 @@ async fn new_credential(
             error!("Error getting issuer {} from registry: {:?}", issuer_id, e);
             UserError::InternalServerError
         })?
-        .ok_or({
+        .ok_or_else(|| {
             error!("Could not find issuer {} in registry.", issuer_id);
             UserError::BadRequest
         })?;
@@ -79,7 +79,7 @@ async fn new_credential(
         .with_timezone(&Utc);
     let credential_subject = req.credential_subject.clone();
     let mut credential_schema = Vec::new();
-    for credential_schema_id in &req.credential_schema_ids.clone() {
+    for credential_schema_id in &req.credential_schema_ids {
         let credential_schema_id = URL::new(credential_schema_id).map_err(|_e| {
             error!("Invalid credential schema id.");
             UserError::BadRequest
@@ -93,7 +93,7 @@ async fn new_credential(
                 );
                 UserError::InternalServerError
             })?
-            .ok_or({
+            .ok_or_else(|| {
                 error!(
                     "Could not find credential schema {} in registry.",
                     credential_schema_id
