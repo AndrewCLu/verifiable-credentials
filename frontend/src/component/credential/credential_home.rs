@@ -1,6 +1,6 @@
 use super::{
-    display_credential::DisplayCredential, make_claims::MakeClaims, select_issuer::SelectIssuer,
-    select_schema::SelectSchema,
+    credential_builder::CredentialBuilder, display_credential::DisplayCredential,
+    select_issuer::SelectIssuer, select_schema::SelectSchema,
 };
 use crate::component::nav_bar::NavBar;
 use vc_core::{CredentialSchema, Issuer, VerifiableCredential};
@@ -38,7 +38,7 @@ pub fn credential_home() -> Html {
                 if credential.is_some() {
                     <DisplayCredential credential={(*credential.as_ref().unwrap()).clone()} />
                 } else if issuer.is_some() && schema.is_some() {
-                    <MakeClaims issuer={(*issuer.as_ref().unwrap()).clone()} schema={(*schema.as_ref().unwrap()).clone()} set_credential={set_credential} set_schema={set_schema} />
+                    <CredentialBuilder issuer={(*issuer.as_ref().unwrap()).clone()} schema={(*schema.as_ref().unwrap()).clone()} set_credential={set_credential} set_schema={set_schema} />
                 } else if issuer.is_some() {
                     <SelectSchema issuer={(*issuer.as_ref().unwrap()).clone()} set_schema={set_schema} set_issuer={set_issuer} />
                 } else {
