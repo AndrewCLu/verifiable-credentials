@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use uuid::Uuid;
 use vc_core::{
-    ClaimProperty, ClaimPropertyValue, Credential, CredentialSchema, SchemaProperty,
-    SchemaPropertyType, SchemaPropertyValue,
+    ClaimProperty, ClaimPropertyValue, CredentialSchema, SchemaProperty, SchemaPropertyType,
+    SchemaPropertyValue, VerifiableCredential,
 };
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlInputElement};
@@ -207,7 +207,7 @@ fn build_claim_tree_from_schema(
 pub struct ClaimBuilderProps {
     pub schema: CredentialSchema,
     pub issuer_id: String,
-    pub set_credential: Callback<Option<Credential>>,
+    pub set_credential: Callback<Option<VerifiableCredential>>,
 }
 
 #[function_component(ClaimBuilder)]
@@ -303,11 +303,21 @@ pub fn claim_builder(props: &ClaimBuilderProps) -> Html {
                 let resp = client.post(url).json(&request_data).send().await;
                 match resp {
                     Ok(resp) => {
-                        debug!("Response from adding new issuer: {:?}", resp);
-                        set_credential.emit(None);
+                        debug!("Response from creating new credential: {:?}", resp);
+                        match resp.json::<VerifiableCredential>().await {
+                            Ok(verifiable_credential) => {
+                                set_credential.emit(Some(verifiable_credential));
+                            }
+                            Err(e) => {
+                                error!(
+                                    "Error parsing response from creating new credential: {:?}",
+                                    e
+                                );
+                            }
+                        }
                     }
                     Err(e) => {
-                        error!("Error creating new issuer: {:?}", e);
+                        error!("Error creating new credential: {:?}", e);
                     }
                 }
             };

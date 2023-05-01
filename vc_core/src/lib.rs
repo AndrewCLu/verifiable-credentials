@@ -208,15 +208,6 @@ pub enum ClaimProperty {
     Map(HashMap<String, ClaimProperty>),
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Proof {
-    type_: String,
-    created: DateTime<Utc>,
-    verification_method: URL,
-    proof_purpose: String,
-    proof_value: String,
-}
-
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct CredentialStatus {}
 
@@ -234,6 +225,15 @@ pub struct TermsOfUse {}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Evidence {}
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct Proof {
+    type_: String,
+    created: DateTime<Utc>,
+    verification_method: URL,
+    proof_purpose: String,
+    proof_value: String,
+}
 
 impl Proof {
     pub fn new(
@@ -371,7 +371,7 @@ impl Credential {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct VerifiableCredential {
     credential: Credential,
     proof: Vec<Proof>,

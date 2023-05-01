@@ -3,7 +3,7 @@ use super::{
     select_schema::SelectSchema,
 };
 use crate::component::nav_bar::NavBar;
-use vc_core::{Credential, CredentialSchema, Issuer};
+use vc_core::{CredentialSchema, Issuer, VerifiableCredential};
 use yew::prelude::*;
 
 #[function_component(CredentialHome)]
@@ -25,7 +25,7 @@ pub fn credential_home() -> Html {
     };
     let set_credential = {
         let credential_clone = credential.clone();
-        Callback::from(move |credential: Option<Credential>| {
+        Callback::from(move |credential: Option<VerifiableCredential>| {
             credential_clone.set(credential);
         })
     };

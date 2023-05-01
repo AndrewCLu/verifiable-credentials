@@ -1,12 +1,12 @@
 use super::claim_builder::ClaimBuilder;
-use vc_core::{Credential, CredentialSchema, Issuer};
+use vc_core::{CredentialSchema, Issuer, VerifiableCredential};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct MakeClaimsProps {
     pub issuer: Issuer,
     pub schema: CredentialSchema,
-    pub set_credential: Callback<Option<Credential>>,
+    pub set_credential: Callback<Option<VerifiableCredential>>,
     pub set_schema: Callback<Option<CredentialSchema>>,
 }
 

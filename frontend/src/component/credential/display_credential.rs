@@ -1,4 +1,4 @@
-use vc_core::{ClaimProperty, ClaimPropertyValue, Credential};
+use vc_core::{ClaimProperty, ClaimPropertyValue, VerifiableCredential};
 use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
@@ -90,21 +90,21 @@ pub fn claim_property_node(props: &ClaimPropertyNodeProps) -> Html {
 
 #[derive(Properties, PartialEq)]
 pub struct DisplayCredentialProps {
-    pub credential: Credential,
+    pub credential: VerifiableCredential,
 }
 
 #[function_component(DisplayCredential)]
 pub fn display_credential(props: &DisplayCredentialProps) -> Html {
-    let credential = props.credential.clone();
+    let credential = props.credential.get_credential().clone();
     let claims = credential.get_credential_subject();
     html! {
-        <div>
+        <div class="text-center">
             <h2 class="text-xl font-bold">{"Credential: "}</h2>
             <p class="text-gray-600">{"ID: "}{credential.get_id()}</p>
             <p class="text-gray-600">{"Issuer: "}{credential.get_issuer()}</p>
             <p class="text-gray-600">{"Valid From: "}{credential.get_valid_from()}</p>
             <p class="text-gray-600">{"Valid Until: "}{credential.get_valid_until()}</p>
-            <div>
+            <div class="text-left">
                 {"{"}
                 {for claims.iter().map(|(key, value)| {
                     html! {
