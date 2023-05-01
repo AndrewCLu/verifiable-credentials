@@ -36,7 +36,7 @@ pub fn credential_home() -> Html {
         <div />
             {html! {
                 if credential.is_some() {
-                    <DisplayCredential credential={(*credential.as_ref().unwrap()).clone()} />
+                    <DisplayCredential verifiable_credential={(*credential.as_ref().unwrap()).clone()} />
                 } else if issuer.is_some() && schema.is_some() {
                     <CredentialBuilder issuer={(*issuer.as_ref().unwrap()).clone()} schema={(*schema.as_ref().unwrap()).clone()} set_credential={set_credential} set_schema={set_schema} />
                 } else if issuer.is_some() {

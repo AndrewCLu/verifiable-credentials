@@ -90,13 +90,15 @@ pub fn claim_property_node(props: &ClaimPropertyNodeProps) -> Html {
 
 #[derive(Properties, PartialEq)]
 pub struct DisplayCredentialProps {
-    pub credential: VerifiableCredential,
+    pub verifiable_credential: VerifiableCredential,
 }
 
 #[function_component(DisplayCredential)]
 pub fn display_credential(props: &DisplayCredentialProps) -> Html {
-    let credential = props.credential.get_credential().clone();
+    let verifiable_credential = &props.verifiable_credential;
+    let credential = verifiable_credential.get_credential().clone();
     let claims = credential.get_credential_subject();
+    let proofs = verifiable_credential.get_proof();
     html! {
         <div class="text-center">
             <h2 class="text-xl font-bold">{"Credential: "}</h2>
@@ -114,6 +116,32 @@ pub fn display_credential(props: &DisplayCredentialProps) -> Html {
                     }
                 })}
                 {"}"}
+            </div>
+            <div>
+                <p class="text-l font-bold">{"Proofs: "}</p>
+                <div class="text-center">
+                    {for proofs.iter().map(|proof| {
+                        html! {
+                            <div class="border-md rounded bg-slate-50 m-2">
+                                <div>
+                                    {"Type: "} {proof.get_type()}
+                                </div>
+                                <div>
+                                    {"Created: "} {proof.get_created()}
+                                </div>
+                                <div>
+                                    {"Proof Purpose: "} {proof.get_proof_purpose()}
+                                </div>
+                                <div>
+                                    {"Verification Method Id: "} {proof.get_verification_method()}
+                                </div>
+                                <div>
+                                    {"Proof Value: "} {proof.get_proof_value()}
+                                </div>
+                            </div>
+                        }
+                    })}
+                </div>
             </div>
         </div>
     }
