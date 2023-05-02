@@ -6,6 +6,7 @@ use yew_router::prelude::*;
 pub mod component;
 pub mod constants;
 pub mod routes;
+pub mod util;
 
 #[function_component]
 fn App() -> Html {

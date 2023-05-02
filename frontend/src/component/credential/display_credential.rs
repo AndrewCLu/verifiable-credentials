@@ -1,5 +1,9 @@
+use crate::constants::INDEXEDDB_OBJECT_STORE_NAME;
+use crate::util::get_indexeddb_connector;
+use indexed_db_futures::prelude::*;
 use vc_core::{ClaimProperty, ClaimPropertyValue, VerifiableCredential};
-use yew::prelude::*;
+use wasm_bindgen::prelude::*;
+use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Properties, PartialEq)]
 pub struct ClaimPropertyValueNodeProps {
@@ -95,10 +99,41 @@ pub struct DisplayCredentialProps {
 
 #[function_component(DisplayCredential)]
 pub fn display_credential(props: &DisplayCredentialProps) -> Html {
-    let verifiable_credential = &props.verifiable_credential;
+    let verifiable_credential = props.verifiable_credential.clone();
     let credential = verifiable_credential.get_credential().clone();
     let claims = credential.get_credential_subject();
     let proofs = verifiable_credential.get_proof();
+
+    let save_credential = {
+        let verifiable_credential = verifiable_credential.clone();
+        Callback::from(move |_| {
+            let verifiable_credential = verifiable_credential.clone();
+            let future = async move {
+                let db = get_indexeddb_connector()
+                    .await
+                    .expect("Could not open IndexedDB.");
+                let tx: IdbTransaction = db
+                    .transaction_on_one_with_mode(
+                        INDEXEDDB_OBJECT_STORE_NAME,
+                        IdbTransactionMode::Readwrite,
+                    )
+                    .expect("Could not create IndexedDB transaction.");
+                let store: IdbObjectStore = tx
+                    .object_store(INDEXEDDB_OBJECT_STORE_NAME)
+                    .expect("Could not create IndexedDB object store.");
+
+                let key = verifiable_credential.get_credential().get_id().get_str();
+                let serialized_credential = serde_json::to_string(&verifiable_credential)
+                    .expect("Could not serialize credential.");
+                let serialized_credential_js = JsValue::from_str(&serialized_credential);
+                store
+                    .put_key_val_owned(key, &serialized_credential_js)
+                    .expect("Could not insert credential into IndexedDB store.");
+            };
+            spawn_local(future);
+        })
+    };
+
     html! {
         <div class="text-center">
             <h2 class="text-xl font-bold">{"Credential: "}</h2>
@@ -142,6 +177,9 @@ pub fn display_credential(props: &DisplayCredentialProps) -> Html {
                         }
                     })}
                 </div>
+            </div>
+            <div class="text-center mt-2">
+                <button onclick={save_credential} class="text-white bg-blue-300 rounded-md p-2">{"Save Credential"}</button>
             </div>
         </div>
     }
