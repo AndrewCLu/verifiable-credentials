@@ -5,7 +5,9 @@ pub struct ProofOptions {
     verification_method: VerificationMethod,
     proof_purpose: String,
     created: DateTime<Utc>,
+    #[allow(dead_code)]
     domain: String,
+    #[allow(dead_code)]
     challenge: String,
 }
 
@@ -39,13 +41,16 @@ impl fmt::Display for ProofGenerationError {
 }
 
 pub trait CryptographicSuite {
+    type DataDocument;
+    type OutputProof;
+
     fn get_id(&self) -> &URL;
 
     fn get_type(&self) -> &String;
 
     fn transform(
         &self,
-        data: &Credential,
+        data: &Self::DataDocument,
         options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError>;
 
@@ -60,14 +65,14 @@ pub trait CryptographicSuite {
         hash_data: &[u8],
         proving_key: &[u8],
         options: &ProofOptions,
-    ) -> Result<Proof, ProofGenerationError>;
+    ) -> Result<Self::OutputProof, ProofGenerationError>;
 
     fn generate_proof(
         &self,
-        data: &Credential,
+        data: &Self::DataDocument,
         proving_key: &[u8],
         options: &ProofOptions,
-    ) -> Result<Proof, ProofGenerationError> {
+    ) -> Result<Self::OutputProof, ProofGenerationError> {
         let transformed_data = self.transform(data, options)?;
         let hash_data = self.hash(&transformed_data, options)?;
         let proof = self.prove(&hash_data, proving_key, options)?;
@@ -90,6 +95,9 @@ impl MyEcdsaSecp256k1 {
 }
 
 impl CryptographicSuite for MyEcdsaSecp256k1 {
+    type DataDocument = Credential;
+    type OutputProof = Proof;
+
     fn get_id(&self) -> &URL {
         &self.id
     }
@@ -101,7 +109,7 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
     fn transform(
         &self,
         data: &Credential,
-        options: &ProofOptions,
+        _options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError> {
         let credential_string =
             serde_json::to_string(data).map_err(|_| ProofGenerationError::Error)?;
@@ -111,7 +119,7 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
     fn hash(
         &self,
         transformed_data: &[u8],
-        options: &ProofOptions,
+        _options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError> {
         Ok(blake3::hash(transformed_data).as_bytes().to_vec())
     }
