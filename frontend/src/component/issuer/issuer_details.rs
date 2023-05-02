@@ -60,14 +60,13 @@ pub fn issuer_details(props: &IssuerDetailsProps) -> Html {
                                 <p class="text-gray-600">{"Verification Methods:"}</p>
                                 <ul>
                                     {for issuer.get_verification_methods().iter().map(|vm| {
-                                        let public_signing_key = hex::encode(vm.get_public_key_multibase());
                                         html! {
                                             <div class="bg-slate-50 rounded m-2">
                                                 <li>
                                                     <p class="text-gray-600">{"ID: "} {vm.get_id()}</p>
                                                     <p class="text-gray-600">{"Type: "} {vm.get_type()}</p>
                                                     <p class="text-gray-600">{"Issuer ID: "} {vm.get_controller_id()}</p>
-                                                    <p class="text-gray-600">{"Key: "} {public_signing_key}</p>
+                                                    <p class="text-gray-600">{"Key: "} {hex::encode(vm.get_public_key_multibase())}</p>
                                                 </li>
                                             </div>
                                         }

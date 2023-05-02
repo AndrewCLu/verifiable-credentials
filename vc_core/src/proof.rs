@@ -1,6 +1,6 @@
 use super::*;
 use chrono::{DateTime, Utc};
-
+use k256::ecdsa::{signature::Signer, Signature, SigningKey};
 pub struct ProofOptions {
     verification_method: VerificationMethod,
     proof_purpose: String,
@@ -103,7 +103,9 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
         data: &Credential,
         options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError> {
-        Ok(vec![])
+        let credential_string =
+            serde_json::to_string(data).map_err(|_| ProofGenerationError::Error)?;
+        Ok(credential_string.as_bytes().to_vec())
     }
 
     fn hash(
@@ -111,7 +113,7 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
         transformed_data: &[u8],
         options: &ProofOptions,
     ) -> Result<Vec<u8>, ProofGenerationError> {
-        Ok(vec![])
+        Ok(blake3::hash(transformed_data).as_bytes().to_vec())
     }
 
     fn prove(
@@ -124,7 +126,10 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
         let created = options.created;
         let verification_method = options.verification_method.get_id().clone();
         let proof_purpose = options.proof_purpose.clone();
-        let proof_value = "Example proof value".to_string();
+        let signing_key =
+            SigningKey::from_slice(proving_key).map_err(|_| ProofGenerationError::Error)?;
+        let signature: Signature = signing_key.sign(hash_data);
+        let proof_value = signature.to_vec();
         Ok(Proof::new(
             type_,
             created,

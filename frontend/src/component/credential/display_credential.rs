@@ -136,7 +136,7 @@ pub fn display_credential(props: &DisplayCredentialProps) -> Html {
                                     {"Verification Method Id: "} {proof.get_verification_method()}
                                 </div>
                                 <div>
-                                    {"Proof Value: "} {proof.get_proof_value()}
+                                    {"Proof Value: "} {hex::encode(proof.get_proof_value())}
                                 </div>
                             </div>
                         }

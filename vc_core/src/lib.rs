@@ -232,7 +232,7 @@ pub struct Proof {
     created: DateTime<Utc>,
     verification_method: URL,
     proof_purpose: String,
-    proof_value: String,
+    proof_value: Vec<u8>,
 }
 
 impl Proof {
@@ -241,7 +241,7 @@ impl Proof {
         created: DateTime<Utc>,
         verification_method: URL,
         proof_purpose: String,
-        proof_value: String,
+        proof_value: Vec<u8>,
     ) -> Self {
         Self {
             type_,
@@ -268,7 +268,7 @@ impl Proof {
         &self.proof_purpose
     }
 
-    pub fn get_proof_value(&self) -> &String {
+    pub fn get_proof_value(&self) -> &Vec<u8> {
         &self.proof_value
     }
 }
