@@ -2,3 +2,4 @@ target/*
 */dist/*
 .vscode/*
 /*/verifiable_data_registry/*
+backend/issuer/*

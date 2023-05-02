@@ -1,7 +1,9 @@
 use super::UserError;
-use crate::registry::VerifiableDataRegistry;
+use crate::{registry::VerifiableDataRegistry, AppState, ISSUER_SIGNING_KEY_CF_PATH};
 use actix_web::{get, post, web, HttpResponse, Responder, Scope};
+use k256::ecdsa::{SigningKey, VerifyingKey};
 use log::{error, info};
+use rand_core::OsRng;
 use serde::Deserialize;
 use std::sync::Mutex;
 use vc_core::{Issuer, VerificationMethod, URL};
@@ -84,19 +86,28 @@ async fn get_all_issuers(
 struct AddVerificationMethodRequest {
     verification_method_id: String,
     type_: String,
-    public_key_multibase: String,
 }
 
 #[post("/{id}/verification_method")]
 async fn new_verification_method(
     req: web::Json<AddVerificationMethodRequest>,
     path: web::Path<String>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let mut registry = registry.lock().map_err(|_e| {
+    let mut registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
+    let issuer_db = app_state.issuer_db.lock().map_err(|_e| {
+        error!("Could not lock issuer db.");
+        UserError::InternalServerError
+    })?;
+    let signing_key_cf = issuer_db
+        .cf_handle(ISSUER_SIGNING_KEY_CF_PATH)
+        .ok_or_else(|| {
+            error!("Could not get issuer signing key cf.");
+            UserError::InternalServerError
+        })?;
     let issuer_id = URL::new(&path.into_inner()).map_err(|_e| {
         error!("Invalid issuer id.");
         UserError::BadRequest
@@ -105,11 +116,25 @@ async fn new_verification_method(
         error!("Invalid verification method id.");
         UserError::BadRequest
     })?;
+
+    let signing_key = SigningKey::random(&mut OsRng);
+    let verifying_key = VerifyingKey::from(&signing_key).to_sec1_bytes();
+    issuer_db
+        .put_cf(
+            signing_key_cf,
+            verification_method_id.get_str().as_bytes(),
+            signing_key.to_bytes(),
+        )
+        .map_err(|e| {
+            error!("Error adding signing key to db: {:?}", e);
+            UserError::InternalServerError
+        })?;
+
     let verification_method = VerificationMethod::new(
         verification_method_id.clone(),
         req.type_.clone(),
         issuer_id.clone(),
-        req.public_key_multibase.clone(),
+        verifying_key.to_vec(),
     );
 
     registry

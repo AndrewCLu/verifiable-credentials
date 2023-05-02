@@ -15,3 +15,5 @@ rocksdb = "0.20.1"
 log = "0.4"
 env_logger = "0.10.0"
 chrono = { version = "0.4.24", features = ["serde"] }
+k256 = { version = "0.13.1", features = ["alloc"] }
+rand_core = { version = "0.6.4", features = ["getrandom"] }

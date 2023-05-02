@@ -63,11 +63,11 @@ pub struct VerificationMethod {
     id: URL,
     type_: String,
     controller_id: URL,
-    public_key_multibase: String,
+    public_key_multibase: Vec<u8>,
 }
 
 impl VerificationMethod {
-    pub fn new(id: URL, type_: String, controller_id: URL, public_key_multibase: String) -> Self {
+    pub fn new(id: URL, type_: String, controller_id: URL, public_key_multibase: Vec<u8>) -> Self {
         Self {
             id,
             type_,
@@ -88,7 +88,7 @@ impl VerificationMethod {
         &self.controller_id
     }
 
-    pub fn get_public_key_multibase(&self) -> &String {
+    pub fn get_public_key_multibase(&self) -> &Vec<u8> {
         &self.public_key_multibase
     }
 }

@@ -14,8 +14,7 @@ pub struct AddVerificationMethodProps {
 
 #[function_component]
 pub fn AddVerificationMethod(props: &AddVerificationMethodProps) -> Html {
-    let type_ = use_state(|| "".to_string());
-    let key = use_state(|| "".to_string());
+    let type_ = use_state(|| "MyK256VerificationMethod".to_string());
     let issuer_id = props.issuer_id.clone();
     let fetch_issuer = props.fetch_issuer.clone();
     let client = reqwest::Client::new();
@@ -32,32 +31,17 @@ pub fn AddVerificationMethod(props: &AddVerificationMethodProps) -> Html {
         })
     };
 
-    let handle_key_input = {
-        let key = key.clone();
-        Callback::from(move |e: InputEvent| {
-            let target: Option<EventTarget> = e.target();
-            let input = target.and_then(|t| t.dyn_into::<HtmlInputElement>().ok());
-
-            if let Some(input) = input {
-                key.set(input.value());
-            }
-        })
-    };
-
     let on_submit = {
         let type_ = type_.clone();
-        let key = key.clone();
         Callback::from(move |e: SubmitEvent| {
             e.prevent_default();
             let type_ = type_.clone();
-            let key = key.clone();
             let issuer_id = issuer_id.clone();
             let fetch_issuer = fetch_issuer.clone();
             let client = client.clone();
             let request_data = json!({
                 "verification_method_id": Uuid::new_v4().to_string(),
                 "type_": *type_,
-                "public_key_multibase": *key,
             });
             let future = async move {
                 let url = format!("{}/issuer/{}/verification_method", BASE_URL, issuer_id);
@@ -72,7 +56,6 @@ pub fn AddVerificationMethod(props: &AddVerificationMethodProps) -> Html {
                     }
                 }
                 type_.set("".to_string());
-                key.set("".to_string());
             };
             spawn_local(future);
         })
@@ -88,13 +71,6 @@ pub fn AddVerificationMethod(props: &AddVerificationMethodProps) -> Html {
                 placeholder="Verification Method Type"
                 value={(*type_).clone()}
                 oninput={handle_type_input}
-            />
-            <input
-                class="border-slate-300 border-2 rounded p-2 mr-2"
-                type="text"
-                placeholder="Key"
-                value={(*key).clone()}
-                oninput={handle_key_input}
             />
             <button class="rounded bg-stone-200 p-2" type="submit">{"Submit"}</button>
         </form>
