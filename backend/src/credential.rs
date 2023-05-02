@@ -1,12 +1,12 @@
 use super::UserError;
-use crate::registry::VerifiableDataRegistry;
+use crate::AppState;
+use crate::ISSUER_SIGNING_KEY_CF_PATH;
 use actix_web::{post, web, HttpResponse, Scope};
 use chrono::{DateTime, Utc};
 use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::sync::Mutex;
-use vc_core::proof::{CryptographicSuite, ECDSAProof2021, ProofOptions};
+use vc_core::proof::{CryptographicSuite, MyEcdsaSecp256k1, ProofOptions};
 use vc_core::{ClaimProperty, Credential, VerifiableCredential, URL};
 
 #[derive(Deserialize)]
@@ -24,13 +24,22 @@ struct NewCredentialRequest {
 #[post("/")]
 async fn new_credential(
     req: web::Json<NewCredentialRequest>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry.lock().map_err(|_e| {
+    let registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
-
+    let issuer_db = app_state.issuer_db.lock().map_err(|_e| {
+        error!("Could not lock issuer db.");
+        UserError::InternalServerError
+    })?;
+    let signing_key_cf = issuer_db
+        .cf_handle(ISSUER_SIGNING_KEY_CF_PATH)
+        .ok_or_else(|| {
+            error!("Could not get issuer signing key cf.");
+            UserError::InternalServerError
+        })?;
     let mut context = Vec::new();
     for context_url in &req.context.clone() {
         let context_url = URL::new(context_url).map_err(|_e| {
@@ -112,13 +121,29 @@ async fn new_credential(
         credential_subject,
         credential_schema,
     );
-    let cryptographic_suite = ECDSAProof2021::new();
+    let cryptographic_suite = MyEcdsaSecp256k1::new();
     let issuer_verification_methods = issuer.get_verification_methods();
     if issuer_verification_methods.is_empty() {
         error!("Issuer {} has no verification methods.", issuer_id);
         return Err(UserError::InternalServerError);
     }
     let verification_method = issuer_verification_methods[0].clone();
+    let issuer_signing_key = issuer_db
+        .get_cf(
+            &signing_key_cf,
+            verification_method.get_id().get_str().as_bytes(),
+        )
+        .map_err(|e| {
+            error!(
+                "Error getting signing key for issuer {} from db: {:?}",
+                issuer_id, e
+            );
+            UserError::InternalServerError
+        })?
+        .ok_or_else(|| {
+            error!("Could not find signing key for issuer {} in db.", issuer_id);
+            UserError::BadRequest
+        })?;
     let proof_purpose = "Proof Purpose".to_string();
     let created = Utc::now();
     let domain = "Proof Domain".to_string();
@@ -131,7 +156,7 @@ async fn new_credential(
         challenge,
     );
     let proof = cryptographic_suite
-        .generate_proof(&credential, &proof_options)
+        .generate_proof(&credential, &issuer_signing_key, &proof_options)
         .map_err(|e| {
             error!("Error generating proof for verifiable credential: {:?}", e);
             UserError::InternalServerError

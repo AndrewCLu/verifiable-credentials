@@ -58,36 +58,38 @@ pub trait CryptographicSuite {
     fn prove(
         &self,
         hash_data: &[u8],
+        proving_key: &[u8],
         options: &ProofOptions,
     ) -> Result<Proof, ProofGenerationError>;
 
     fn generate_proof(
         &self,
         data: &Credential,
+        proving_key: &[u8],
         options: &ProofOptions,
     ) -> Result<Proof, ProofGenerationError> {
         let transformed_data = self.transform(data, options)?;
         let hash_data = self.hash(&transformed_data, options)?;
-        let proof = self.prove(&hash_data, options)?;
+        let proof = self.prove(&hash_data, proving_key, options)?;
         Ok(proof)
     }
 }
 
-pub struct ECDSAProof2021 {
+pub struct MyEcdsaSecp256k1 {
     id: URL,
     type_: String,
 }
 
-impl ECDSAProof2021 {
+impl MyEcdsaSecp256k1 {
     pub fn new() -> Self {
         Self {
             id: URL::new("https://w3id.org/security#proof-ecdsa-secp256k1-2021").unwrap(),
-            type_: "EcdsaSecp256k1Signature2021".to_string(),
+            type_: "MyEcdsaSecp256k1Signature".to_string(),
         }
     }
 }
 
-impl CryptographicSuite for ECDSAProof2021 {
+impl CryptographicSuite for MyEcdsaSecp256k1 {
     fn get_id(&self) -> &URL {
         &self.id
     }
@@ -115,6 +117,7 @@ impl CryptographicSuite for ECDSAProof2021 {
     fn prove(
         &self,
         hash_data: &[u8],
+        proving_key: &[u8],
         options: &ProofOptions,
     ) -> Result<Proof, ProofGenerationError> {
         let type_ = self.get_type().clone();
