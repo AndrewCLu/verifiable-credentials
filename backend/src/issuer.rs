@@ -1,11 +1,10 @@
 use super::UserError;
-use crate::{registry::VerifiableDataRegistry, AppState, ISSUER_SIGNING_KEY_CF_PATH};
+use crate::{AppState, ISSUER_SIGNING_KEY_CF_PATH};
 use actix_web::{get, post, web, HttpResponse, Responder, Scope};
 use k256::ecdsa::{SigningKey, VerifyingKey};
 use log::{error, info};
 use rand_core::OsRng;
 use serde::Deserialize;
-use std::sync::Mutex;
 use vc_core::{Issuer, VerificationMethod, URL};
 
 #[derive(Deserialize)]
@@ -17,9 +16,9 @@ struct AddIssuerRequest {
 #[post("/")]
 async fn new_issuer(
     req: web::Json<AddIssuerRequest>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let mut registry = registry.lock().map_err(|_e| {
+    let mut registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
@@ -41,9 +40,9 @@ async fn new_issuer(
 #[get("/{id}")]
 async fn get_issuer(
     path: web::Path<String>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry.lock().map_err(|_e| {
+    let registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
@@ -67,9 +66,9 @@ pub struct GetAllIssuersRequest {
 #[get("/")]
 async fn get_all_issuers(
     req: web::Query<GetAllIssuersRequest>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry.lock().map_err(|_e| {
+    let registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;

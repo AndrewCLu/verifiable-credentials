@@ -1,10 +1,9 @@
 use super::UserError;
-use crate::registry::VerifiableDataRegistry;
+use crate::AppState;
 use actix_web::{get, post, web, HttpResponse, Scope};
 use log::{error, info};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::sync::Mutex;
 use vc_core::{
     CredentialSchema, SchemaProperty, SchemaPropertyValue, SchemaPropertyValueType, URL,
 };
@@ -18,9 +17,9 @@ struct AddSchemaRequest {
 #[post("/")]
 async fn new_schema(
     req: web::Json<AddSchemaRequest>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let mut registry = registry.lock().map_err(|_e| {
+    let mut registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
@@ -73,9 +72,9 @@ async fn new_schema(
 #[get("/{id}")]
 async fn get_schema(
     path: web::Path<String>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry.lock().map_err(|_e| {
+    let registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
@@ -99,9 +98,9 @@ pub struct GetAllSchemasRequest {
 #[get("/")]
 async fn get_all_schemas(
     req: web::Query<GetAllSchemasRequest>,
-    registry: web::Data<Mutex<VerifiableDataRegistry>>,
+    app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    let registry = registry.lock().map_err(|_e| {
+    let registry = app_state.registry.lock().map_err(|_e| {
         error!("Could not lock registry.");
         UserError::InternalServerError
     })?;
