@@ -1,10 +1,12 @@
 use crate::constants::INDEXEDDB_OBJECT_STORE_NAME;
 use crate::util::get_indexeddb_connector;
+use crate::Route;
 use indexed_db_futures::{js_sys::Array, prelude::*};
 use std::rc::Rc;
 use vc_core::VerifiableCredential;
 use wasm_bindgen::prelude::*;
 use yew::{platform::spawn_local, prelude::*};
+use yew_router::prelude::Link;
 
 #[hook]
 pub fn use_credentials() -> (Rc<Vec<VerifiableCredential>>, bool, Callback<()>) {
@@ -73,9 +75,11 @@ pub fn credential_list() -> Html {
             let credential = credential.get_credential();
             html! {
                 <div class="p-4 border border-gray-200">
-                    <h2 class="text-xl font-bold">{"Credential: "}</h2>
-                    <p class="text-gray-600">{"ID: "}{credential.get_id()}</p>
-                    <p class="text-gray-600">{"Issuer: "}{credential.get_issuer()}</p>
+                    <Link<Route> to={Route::CredentialDetails {id: credential.get_id().get_str().to_string()}}>
+                        <h2 class="text-xl font-bold">{"Credential: "}</h2>
+                        <p class="text-gray-600">{"ID: "}{credential.get_id()}</p>
+                        <p class="text-gray-600">{"Issuer: "}{credential.get_issuer()}</p>
+                    </Link<Route>>
                 </div>
             }
         })
