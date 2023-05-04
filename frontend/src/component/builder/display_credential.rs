@@ -1,9 +1,11 @@
 use crate::constants::INDEXEDDB_OBJECT_STORE_NAME;
 use crate::util::get_indexeddb_connector;
+use crate::Route;
 use indexed_db_futures::prelude::*;
 use vc_core::{ClaimProperty, ClaimPropertyValue, VerifiableCredential};
 use wasm_bindgen::prelude::*;
 use yew::{platform::spawn_local, prelude::*};
+use yew_router::prelude::Redirect;
 
 #[derive(Properties, PartialEq)]
 pub struct ClaimPropertyValueNodeProps {
@@ -99,6 +101,7 @@ pub struct DisplayCredentialProps {
 
 #[function_component(DisplayCredential)]
 pub fn display_credential(props: &DisplayCredentialProps) -> Html {
+    let return_to_builder = use_state(|| false);
     let verifiable_credential = props.verifiable_credential.clone();
     let credential = verifiable_credential.get_credential().clone();
     let claims = credential.get_credential_subject();
@@ -106,8 +109,10 @@ pub fn display_credential(props: &DisplayCredentialProps) -> Html {
 
     let save_credential = {
         let verifiable_credential = verifiable_credential.clone();
+        let return_to_builder = return_to_builder.clone();
         Callback::from(move |_| {
             let verifiable_credential = verifiable_credential.clone();
+            let return_to_builder = return_to_builder.clone();
             let future = async move {
                 let db = get_indexeddb_connector()
                     .await
@@ -129,10 +134,17 @@ pub fn display_credential(props: &DisplayCredentialProps) -> Html {
                 store
                     .put_key_val_owned(key, &serialized_credential_js)
                     .expect("Could not insert credential into IndexedDB store.");
+                return_to_builder.set(true);
             };
             spawn_local(future);
         })
     };
+
+    if *return_to_builder {
+        return html! {
+            <Redirect<Route> to={Route::Builder} />
+        };
+    }
 
     html! {
         <div class="text-center">
