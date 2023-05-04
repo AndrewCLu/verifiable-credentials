@@ -1,3 +1,4 @@
+pub mod builder;
 pub mod credential;
 pub mod home;
 pub mod issuer;

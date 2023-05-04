@@ -1,4 +1,3 @@
-use crate::component::nav_bar::NavBar;
 use crate::constants::INDEXEDDB_OBJECT_STORE_NAME;
 use crate::util::get_indexeddb_connector;
 use indexed_db_futures::{js_sys::Array, prelude::*};
@@ -65,8 +64,8 @@ pub fn use_credentials() -> (Rc<Vec<VerifiableCredential>>, bool, Callback<()>) 
     (Rc::clone(&credentials), *loading, fetch_credentials)
 }
 
-#[function_component(MyCredentials)]
-pub fn my_credentials() -> Html {
+#[function_component(CredentialList)]
+pub fn credential_list() -> Html {
     let (credentials, loading, _fetch_credentials) = use_credentials();
     let credential_list = credentials
         .iter()
@@ -88,14 +87,9 @@ pub fn my_credentials() -> Html {
         html! { <div class="grid grid-cols-4 gap-4">{credential_list}</div> }
     };
     html! {
-        <div class="m-8">
-            <NavBar />
-            { html! {
-                <div class = "m-8">
-                    <h1 class="text-3xl text-center mb-2">{"All Credentials"}</h1>
-                    {content}
-                </div>
-            }}
+        <div class = "m-8">
+            <h1 class="text-3xl text-center mb-2">{"All Credentials"}</h1>
+            {content}
         </div>
     }
 }
