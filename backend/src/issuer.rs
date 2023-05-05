@@ -1,6 +1,6 @@
 use super::UserError;
 use crate::{AppState, ISSUER_SIGNING_KEY_CF_PATH};
-use actix_web::{get, post, web, HttpResponse, Responder, Scope};
+use actix_web::{get, post, web, HttpResponse, Scope};
 use k256::ecdsa::{SigningKey, VerifyingKey};
 use log::{error, info};
 use rand_core::OsRng;
@@ -149,22 +149,10 @@ async fn new_verification_method(
     Ok(HttpResponse::Ok().json(verification_method_id))
 }
 
-#[get("/issue_credential")]
-async fn issue_credential() -> impl Responder {
-    HttpResponse::Ok().body("Added a credential.")
-}
-
-#[get("/revoke_credential")]
-async fn revoke_credential() -> impl Responder {
-    HttpResponse::Ok().body("Revoked a credential.")
-}
-
 pub fn init_routes() -> Scope {
     web::scope("/issuer")
         .service(new_issuer)
         .service(get_issuer)
         .service(get_all_issuers)
         .service(new_verification_method)
-        .service(issue_credential)
-        .service(revoke_credential)
 }

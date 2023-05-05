@@ -1,5 +1,6 @@
 target/*
 */dist/*
 .vscode/*
-/*/verifiable_data_registry/*
+backend/verifiable_data_registry/*
 backend/issuer/*
+backend/verifier/*

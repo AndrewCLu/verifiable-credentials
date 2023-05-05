@@ -443,3 +443,23 @@ impl VerifiablePresentation {
         &self.proof
     }
 }
+
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub struct Verifier {
+    id: URL,
+    schema_id: URL,
+}
+
+impl Verifier {
+    pub fn new(id: URL, schema_id: URL) -> Self {
+        Self { id, schema_id }
+    }
+
+    pub fn get_id(&self) -> &URL {
+        &self.id
+    }
+
+    pub fn get_schema_id(&self) -> &URL {
+        &self.schema_id
+    }
+}
