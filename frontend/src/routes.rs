@@ -4,6 +4,7 @@ use crate::component::{
     home::Home,
     issuer::{issuer_details::IssuerDetails, issuer_home::IssuerHome},
     not_found::NotFound,
+    presentation::presentation_home::PresentationHome,
     schema::{schema_details::SchemaDetails, schema_home::SchemaHome},
     verifier::verifier_home::VerifierHome,
 };
@@ -30,6 +31,8 @@ pub enum Route {
     Credential,
     #[at("/credential/:id")]
     CredentialDetails { id: String },
+    #[at("/presentation")]
+    Presentation,
     #[not_found]
     #[at("/404")]
     NotFound,
@@ -46,6 +49,7 @@ pub fn switch(routes: Route) -> Html {
         Route::Builder => html! { <BuilderHome /> },
         Route::Credential => html! { <CredentialHome /> },
         Route::CredentialDetails { id } => html! { <CredentialDetails credential_id={id} /> },
+        Route::Presentation => html! { <PresentationHome /> },
         Route::NotFound => html! { <NotFound /> },
     }
 }

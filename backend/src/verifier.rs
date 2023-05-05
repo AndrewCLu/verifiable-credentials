@@ -9,6 +9,7 @@ use vc_core::{VerifiableCredential, Verifier, URL};
 #[derive(Deserialize)]
 struct AddVerifierRequest {
     id: String,
+    name: String,
     schema_id: String,
 }
 
@@ -31,11 +32,12 @@ async fn new_verifier(
         error!("Invalid verifier id.");
         UserError::BadRequest
     })?;
+    let name = req.name.clone();
     let schema_id = URL::new(&req.schema_id).map_err(|_e| {
         error!("Invalid schema id.");
         UserError::BadRequest
     })?;
-    let verifier = Verifier::new(verifier_id.clone(), schema_id.clone());
+    let verifier = Verifier::new(verifier_id.clone(), name, schema_id.clone());
 
     let verifier_json = serde_json::to_string(&verifier).map_err(|_e| {
         error!("Could not serialize verifier.");

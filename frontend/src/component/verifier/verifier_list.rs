@@ -17,7 +17,8 @@ pub fn verifier_list(props: &VerifierListProps) -> Html {
             let verifier_id = verifier.get_id().get_str().to_string();
             html! {
                 <div class="p-4 border border-gray-200">
-                <h2 class="text-xl font-bold">{verifier_id}</h2>
+                <h2 class="text-xl font-bold">{verifier.get_name()}</h2>
+                    <p class="text-gray-600">{"ID: "}{verifier_id}</p>
                     <p class="text-gray-600">{"Schema ID: "}{verifier.get_schema_id()}</p>
                 </div>
             }
