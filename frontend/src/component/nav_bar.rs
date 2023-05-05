@@ -10,6 +10,7 @@ pub fn nav_bar() -> Html {
                 <li class="m-2 p-2 border border-slate-200 bg-slate-100 rounded-lg"><Link<Route> to={Route::Home}>{ "Home" }</Link<Route>></li>
                 <li class="m-2 p-2 border border-slate-200 bg-slate-100 rounded-lg"><Link<Route> to={Route::Issuer}>{ "Issuers" }</Link<Route>></li>
                 <li class="m-2 p-2 border border-slate-200 bg-slate-100 rounded-lg"><Link<Route> to={Route::Schema}>{ "Schemas" }</Link<Route>></li>
+                <li class="m-2 p-2 border border-slate-200 bg-slate-100 rounded-lg"><Link<Route> to={Route::Verifier}>{ "Verifiers" }</Link<Route>></li>
                 <li class="m-2 p-2 border border-slate-200 bg-slate-100 rounded-lg"><Link<Route> to={Route::Builder}>{ "Build a Credential" }</Link<Route>></li>
                 <li class="m-2 p-2 border border-slate-200 bg-slate-100 rounded-lg"><Link<Route> to={Route::Credential}>{ "Credentials" }</Link<Route>></li>
             </ul>

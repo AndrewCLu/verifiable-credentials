@@ -5,6 +5,7 @@ use crate::component::{
     issuer::{issuer_details::IssuerDetails, issuer_home::IssuerHome},
     not_found::NotFound,
     schema::{schema_details::SchemaDetails, schema_home::SchemaHome},
+    verifier::verifier_home::VerifierHome,
 };
 use yew::prelude::*;
 use yew_router::prelude::*;
@@ -21,6 +22,8 @@ pub enum Route {
     Schema,
     #[at("/schema/:id")]
     SchemaDetails { id: String },
+    #[at("/verifier")]
+    Verifier,
     #[at("/builder")]
     Builder,
     #[at("/credential")]
@@ -39,6 +42,7 @@ pub fn switch(routes: Route) -> Html {
         Route::IssuerDetails { id } => html! { <IssuerDetails issuer_id={id} /> },
         Route::Schema => html! { <SchemaHome /> },
         Route::SchemaDetails { id } => html! { <SchemaDetails schema_id={id} /> },
+        Route::Verifier => html! { <VerifierHome /> },
         Route::Builder => html! { <BuilderHome /> },
         Route::Credential => html! { <CredentialHome /> },
         Route::CredentialDetails { id } => html! { <CredentialDetails credential_id={id} /> },

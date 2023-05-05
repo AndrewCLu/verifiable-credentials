@@ -23,7 +23,6 @@ pub fn schema_list(props: &SchemaListProps) -> Html {
                     <h2 class="text-xl font-bold">{schema.get_name()}</h2>
                     <p class="text-gray-600">{"ID: "}{schema.get_id()}</p>
                 </Link<Route>>
-
                 </div>
             }
         })
