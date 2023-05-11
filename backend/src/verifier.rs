@@ -3,8 +3,8 @@ use crate::{AppState, DEFAULT_RESOURCE_LIMIT, VERIFIER_VERIFIER_CF_PATH};
 use actix_web::{get, post, web, HttpResponse, Scope};
 use log::{error, info, warn};
 use rocksdb::IteratorMode;
-use serde::Deserialize;
-use vc_core::{VerifiableCredential, Verifier, URL};
+use serde::{Deserialize, Serialize};
+use vc_core::{Credential, CredentialSchema, Proof, VerifiableCredential, Verifier, URL};
 
 #[derive(Deserialize)]
 struct AddVerifierRequest {
@@ -150,7 +150,14 @@ async fn get_all_verifiers(
 
 #[derive(Deserialize)]
 pub struct VerifyCredentialRequest {
+    verifier_id: String,
     verifiable_credential: VerifiableCredential,
+}
+
+#[derive(Serialize)]
+pub struct VerifyCredentialResponse {
+    result: bool,
+    reason: String,
 }
 
 #[get("/verify")]
@@ -158,7 +165,101 @@ async fn verify_credential(
     req: web::Query<VerifyCredentialRequest>,
     app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
-    Ok(HttpResponse::Ok().json(()))
+    let registry = app_state.registry.lock().map_err(|_e| {
+        error!("Could not lock registry.");
+        UserError::InternalServerError
+    })?;
+    let verifier_db = app_state.verifier_db.lock().map_err(|_e| {
+        error!("Could not lock verifier db.");
+        UserError::InternalServerError
+    })?;
+    let verifier_cf = verifier_db
+        .cf_handle(VERIFIER_VERIFIER_CF_PATH)
+        .ok_or_else(|| {
+            error!("Could not get verifier cf.");
+            UserError::InternalServerError
+        })?;
+    let verifier_id = URL::new(&req.verifier_id).map_err(|_e| {
+        error!("Invalid verifier id.");
+        UserError::BadRequest
+    })?;
+    let verifier_bytes = verifier_db
+        .get_cf(verifier_cf, verifier_id.get_str().as_bytes())
+        .map_err(|e| {
+            error!("Error getting verifier from db: {:?}", e);
+            UserError::InternalServerError
+        })?
+        .ok_or_else(|| {
+            error!("Could not find verifier {} in db.", verifier_id);
+            UserError::BadRequest
+        })?;
+    let verifier = String::from_utf8(verifier_bytes)
+        .map_err(|_e| {
+            error!("Could not deserialize verifier.");
+            UserError::InternalServerError
+        })
+        .and_then(|verifier_json| {
+            serde_json::from_str::<Verifier>(verifier_json.as_str()).map_err(|_e| {
+                error!("Could not deserialize verifier.");
+                UserError::InternalServerError
+            })
+        })?;
+    let schema_id = verifier.get_schema_id();
+    let schema = registry
+        .get_schema(&schema_id)
+        .map_err(|e| {
+            error!("Could not get schema from registry: {:?}", e);
+            UserError::BadRequest
+        })?
+        .ok_or_else(|| {
+            error!("Could not find schema {} in registry.", schema_id);
+            UserError::BadRequest
+        })?;
+    let verifiable_credential = req.verifiable_credential.clone();
+    let credential = verifiable_credential.get_credential();
+    let proofs = verifiable_credential.get_proof();
+    if proofs.len() == 0 {
+        error!("No proofs found in verifiable credential.");
+        return Err(UserError::BadRequest);
+    }
+    let proof = proofs
+        .get(0)
+        .expect("Proofs should have at least one element.");
+
+    let mut resp = VerifyCredentialResponse {
+        result: true,
+        reason: "".to_string(),
+    };
+    if !is_valid_credential_format(&credential) {
+        resp.result = false;
+        resp.reason = "Invalid credential format.".to_string();
+    } else if !is_valid_credential_expiry(&credential) {
+        resp.result = false;
+        resp.reason = "Invalid credential expiry.".to_string();
+    } else if !is_valid_credential_schema(&credential, &schema) {
+        resp.result = false;
+        resp.reason = "Invalid credential schema.".to_string();
+    } else if !is_valid_verifiable_credential_proof(&credential, &proof) {
+        resp.result = false;
+        resp.reason = "Invalid verifiable credential proof.".to_string();
+    }
+    Ok(HttpResponse::Ok().json(resp))
+}
+
+fn is_valid_credential_format(cred: &Credential) -> bool {
+    true
+}
+
+fn is_valid_credential_expiry(cred: &Credential) -> bool {
+    true
+}
+
+fn is_valid_credential_schema(cred: &Credential, schema: &CredentialSchema) -> bool {
+    true
+}
+
+fn is_valid_verifiable_credential_proof(cred: &Credential, proof: &Proof) -> bool {
+    true
 }
 
 pub fn init_routes() -> Scope {
