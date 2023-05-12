@@ -7,8 +7,8 @@ use yew::{platform::spawn_local, prelude::*};
 
 #[derive(Clone, PartialEq, Deserialize)]
 pub struct VerifyCredentialResults {
-    verified: bool,
-    reason: String,
+    pub verified: bool,
+    pub reason: String,
 }
 
 #[derive(Properties, PartialEq)]
