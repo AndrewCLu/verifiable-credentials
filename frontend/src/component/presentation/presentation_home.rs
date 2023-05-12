@@ -1,6 +1,8 @@
 use super::{
-    display_result::DisplayResult, presentation_builder::PresentationBuilder,
-    select_credential::SelectCredential, select_verifier::SelectVerifier,
+    display_result::DisplayResult,
+    presentation_builder::{PresentationBuilder, VerifyCredentialResults},
+    select_credential::SelectCredential,
+    select_verifier::SelectVerifier,
 };
 use crate::component::nav_bar::NavBar;
 use vc_core::{VerifiableCredential, Verifier};
@@ -10,7 +12,7 @@ use yew::prelude::*;
 pub fn presentation_home() -> Html {
     let verifier = use_state(|| None);
     let credential = use_state(|| None);
-    let verified = use_state(|| false);
+    let verified = use_state(|| None);
     let set_verifier = {
         let verifier_clone = verifier.clone();
         Callback::from(move |verifier: Option<Verifier>| {
@@ -25,7 +27,7 @@ pub fn presentation_home() -> Html {
     };
     let set_verified = {
         let verified_clone = verified.clone();
-        Callback::from(move |verified: bool| {
+        Callback::from(move |verified: Option<VerifyCredentialResults>| {
             verified_clone.set(verified);
         })
     };
@@ -35,8 +37,8 @@ pub fn presentation_home() -> Html {
         <NavBar />
         <div />
             {html! {
-                if *verified {
-                    <DisplayResult verifier={(*verifier.as_ref().unwrap()).clone()} credential={(*credential.as_ref().unwrap()).clone()} set_verifier={set_verifier} set_credential={set_credential} set_verified={set_verified} />
+                if verified.is_some() {
+                    <DisplayResult verifier={(*verifier.as_ref().unwrap()).clone()} credential={(*credential.as_ref().unwrap()).clone()} verified={(*verified.as_ref().unwrap()).clone()} set_verifier={set_verifier} set_credential={set_credential} set_verified={set_verified} />
                 } else if verifier.is_some() && credential.is_some() {
                     <PresentationBuilder verifier={(*verifier.as_ref().unwrap()).clone()} credential={(*credential.as_ref().unwrap()).clone()} set_verified={set_verified} set_credential={set_credential} />
                 } else if verifier.is_some() {

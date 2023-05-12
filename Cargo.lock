@@ -826,6 +826,7 @@ dependencies = [
  "indexed_db_futures",
  "log",
  "reqwest",
+ "serde",
  "serde_json",
  "uuid",
  "vc_core",
