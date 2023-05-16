@@ -1,10 +1,14 @@
 use super::UserError;
 use crate::{AppState, DEFAULT_RESOURCE_LIMIT, VERIFIER_VERIFIER_CF_PATH};
 use actix_web::{get, post, web, HttpResponse, Scope};
+use chrono::Utc;
 use log::{error, info, warn};
 use rocksdb::IteratorMode;
 use serde::{Deserialize, Serialize};
-use vc_core::{Credential, CredentialSchema, Proof, VerifiableCredential, Verifier, URL};
+use vc_core::{
+    ClaimProperty, ClaimPropertyValue, Credential, CredentialSchema, Proof, SchemaProperty,
+    SchemaPropertyValue, SchemaPropertyValueType, VerifiableCredential, Verifier, URL,
+};
 
 #[derive(Deserialize)]
 struct AddVerifierRequest {
@@ -247,15 +251,84 @@ async fn verify_credential(
 }
 
 fn is_valid_credential_format(cred: &Credential) -> bool {
-    true
+    let context = cred.get_context();
+    for ctx in context.iter() {
+        if ctx.get_str() == "https://www.w3.org/ns/credentials/v2" {
+            return true;
+        }
+    }
+
+    false
 }
 
 fn is_valid_credential_expiry(cred: &Credential) -> bool {
-    true
+    let current_time = Utc::now();
+    let after_valid_from = current_time >= *cred.get_valid_from();
+    let before_valid_until = current_time <= *cred.get_valid_until();
+
+    after_valid_from && before_valid_until
 }
 
 fn is_valid_credential_schema(cred: &Credential, schema: &CredentialSchema) -> bool {
+    let claims = cred.get_credential_subject();
+    let schema_properties = schema.get_properties();
+    for (key, schema_prop) in schema_properties {
+        if let Some(claim_prop) = claims.get(key) {
+            if !is_valid_credential_schema_property(claim_prop, schema_prop) {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
     true
+}
+
+fn is_valid_credential_schema_property(
+    claim_property: &ClaimProperty,
+    schema_property: &SchemaProperty,
+) -> bool {
+    match (claim_property, schema_property) {
+        (ClaimProperty::Value(claim_value), SchemaProperty::Value(schema_value)) => {
+            is_valid_credential_schema_property_value(claim_value, schema_value)
+        }
+        (ClaimProperty::Array(claim_array), SchemaProperty::Array(schema_array)) => {
+            if claim_array.len() != schema_array.len() {
+                return false;
+            }
+            for (claim_prop, schema_prop) in claim_array.iter().zip(schema_array.iter()) {
+                if !is_valid_credential_schema_property(claim_prop, schema_prop) {
+                    return false;
+                }
+            }
+            true
+        }
+        (ClaimProperty::Map(claim_map), SchemaProperty::Map(schema_map)) => {
+            for (key, schema_prop) in schema_map {
+                if let Some(claim_prop) = claim_map.get(key) {
+                    if !is_valid_credential_schema_property(claim_prop, schema_prop) {
+                        return false;
+                    }
+                } else {
+                    return false;
+                }
+            }
+            true
+        }
+        _ => false,
+    }
+}
+
+fn is_valid_credential_schema_property_value(
+    claim_value: &ClaimPropertyValue,
+    schema_value: &SchemaPropertyValue,
+) -> bool {
+    match (claim_value, schema_value.get_type()) {
+        (ClaimPropertyValue::Text(_), SchemaPropertyValueType::Text) => true,
+        (ClaimPropertyValue::Number(_), SchemaPropertyValueType::Number) => true,
+        (ClaimPropertyValue::Boolean(_), SchemaPropertyValueType::Boolean) => true,
+        _ => false,
+    }
 }
 
 fn is_valid_verifiable_credential_proof(cred: &Credential, proof: &Proof) -> bool {
