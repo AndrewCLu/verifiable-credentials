@@ -385,12 +385,12 @@ fn is_valid_verifiable_credential_proof(
         domain,
         challenge,
     );
-    if let Ok(is_valid_proof) =
-        cryptographic_suite.verify_proof(cred, proof, verifying_key, &proof_options)
-    {
-        is_valid_proof
-    } else {
-        false
+    match cryptographic_suite.verify_proof(cred, proof, verifying_key, &proof_options) {
+        Ok(is_valid_proof) => is_valid_proof,
+        Err(e) => {
+            error!("Error verifying proof: {:?}", e);
+            false
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 use super::claim_builder::ClaimBuilder;
 use crate::constants::BASE_URL;
-use chrono::Utc;
+use chrono::{Duration, Utc};
 use log::{debug, error};
 use serde_json::json;
 use std::cell::RefCell;
@@ -137,7 +137,7 @@ pub fn credential_builder(props: &CredentialBuilderProps) -> Html {
             let type_ = vec!["VerifiableCredential".to_string()];
             let issuer_id = issuer_id.clone();
             let valid_from = Utc::now().to_rfc3339();
-            let valid_until = Utc::now().to_rfc3339();
+            let valid_until = (Utc::now() + Duration::days(100)).to_rfc3339();
             let credential_subject = claim_properties_state.borrow().clone();
             let schema_id = schema_id.clone();
             let credential_schema_ids = vec![schema_id];

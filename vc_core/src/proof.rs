@@ -4,6 +4,7 @@ use k256::ecdsa::{
     signature::{Signer, Verifier},
     Signature, SigningKey, VerifyingKey,
 };
+
 pub struct ProofOptions {
     verification_method: VerificationMethod,
     proof_purpose: String,
@@ -45,12 +46,32 @@ impl fmt::Display for ProofGenerationError {
 
 #[derive(Debug)]
 pub enum ProofVerificationError {
-    Error,
+    MismatchedProofPurposeError,
+    BadTransformationError,
+    BadHashingError,
+    MalformedProofError,
+    InvalidPublicKeyError,
 }
 
 impl fmt::Display for ProofVerificationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        match self {
+            Self::MismatchedProofPurposeError => {
+                write!(f, "Mismatched proof purpose.")
+            }
+            Self::BadTransformationError => {
+                write!(f, "Bad transformation.")
+            }
+            Self::BadHashingError => {
+                write!(f, "Bad hashing.")
+            }
+            Self::MalformedProofError => {
+                write!(f, "Malformed proof.")
+            }
+            Self::InvalidPublicKeyError => {
+                write!(f, "Invalid public key.")
+            }
+        }
     }
 }
 
@@ -177,18 +198,18 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
         options: &ProofOptions,
     ) -> Result<bool, ProofVerificationError> {
         if *proof.get_proof_purpose() != options.proof_purpose {
-            return Err(ProofVerificationError::Error);
+            return Err(ProofVerificationError::MismatchedProofPurposeError);
         }
         let transformed_data = self
             .transform(data, options)
-            .map_err(|_| ProofVerificationError::Error)?;
+            .map_err(|_| ProofVerificationError::BadTransformationError)?;
         let hash_data = self
             .hash(&transformed_data, options)
-            .map_err(|_| ProofVerificationError::Error)?;
+            .map_err(|_| ProofVerificationError::BadHashingError)?;
         let signature = Signature::from_slice(proof.get_proof_value())
-            .map_err(|_| ProofVerificationError::Error)?;
+            .map_err(|_| ProofVerificationError::MalformedProofError)?;
         let public_key = VerifyingKey::from_sec1_bytes(verifying_key)
-            .map_err(|_| ProofVerificationError::Error)?;
+            .map_err(|_| ProofVerificationError::InvalidPublicKeyError)?;
 
         Ok(public_key.verify(&hash_data, &signature).is_ok())
     }
