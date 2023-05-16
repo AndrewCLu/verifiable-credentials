@@ -1,4 +1,3 @@
-use crate::component::nav_bar::NavBar;
 use vc_core::{VerifiableCredential, Verifier};
 use yew::prelude::*;
 
@@ -45,8 +44,6 @@ pub fn display_result(props: &DisplayResultProps) -> Html {
 
     html! {
         <div class="m-8">
-            <NavBar />
-            <div />
             {content}
             <div class="text-center mt-2">
                 <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick={reset_verification}>

@@ -6,8 +6,10 @@ use log::{error, info, warn};
 use rocksdb::IteratorMode;
 use serde::{Deserialize, Serialize};
 use vc_core::{
+    proof::{CryptographicSuite, MyEcdsaSecp256k1, ProofOptions},
     ClaimProperty, ClaimPropertyValue, Credential, CredentialSchema, Proof, SchemaProperty,
-    SchemaPropertyValue, SchemaPropertyValueType, VerifiableCredential, Verifier, URL,
+    SchemaPropertyValue, SchemaPropertyValueType, VerifiableCredential, VerificationMethod,
+    Verifier, URL,
 };
 
 #[derive(Deserialize)]
@@ -155,18 +157,18 @@ async fn get_all_verifiers(
 #[derive(Deserialize)]
 pub struct VerifyCredentialRequest {
     verifier_id: String,
-    verifiable_credential: VerifiableCredential,
+    verifiable_credential: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub struct VerifyCredentialResponse {
-    result: bool,
+    verified: bool,
     reason: String,
 }
 
-#[get("/verify")]
+#[post("/verify")]
 async fn verify_credential(
-    req: web::Query<VerifyCredentialRequest>,
+    req: web::Json<VerifyCredentialRequest>,
     app_state: web::Data<AppState>,
 ) -> Result<HttpResponse, UserError> {
     let registry = app_state.registry.lock().map_err(|_e| {
@@ -219,7 +221,15 @@ async fn verify_credential(
             error!("Could not find schema {} in registry.", schema_id);
             UserError::BadRequest
         })?;
-    let verifiable_credential = req.verifiable_credential.clone();
+
+    let verifiable_credential_string = req.verifiable_credential.clone();
+    let verifiable_credential = serde_json::from_str::<VerifiableCredential>(
+        &verifiable_credential_string,
+    )
+    .map_err(|_| {
+        error!("Could not deserialize verifiable credential.");
+        UserError::BadRequest
+    })?;
     let credential = verifiable_credential.get_credential();
     let proofs = verifiable_credential.get_proof();
     if proofs.len() == 0 {
@@ -230,21 +240,47 @@ async fn verify_credential(
         .get(0)
         .expect("Proofs should have at least one element.");
 
+    let issuer_id = credential.get_issuer();
+    let issuer = registry
+        .get_issuer(issuer_id)
+        .map_err(|e| {
+            error!("Could not get issuer from registry: {:?}", e);
+            UserError::BadRequest
+        })?
+        .ok_or_else(|| {
+            error!("Could not find issuer {} in registry.", issuer_id);
+            UserError::BadRequest
+        })?;
+    let verification_methods = issuer.get_verification_methods();
+    if verification_methods.len() == 0 {
+        error!("No verification methods found for issuer.");
+        return Err(UserError::BadRequest);
+    }
+    let verification_method = verification_methods
+        .get(0)
+        .expect("Verification methods should have at least one element.");
+    let verifying_key = verification_method.get_public_key_multibase();
+
     let mut resp = VerifyCredentialResponse {
-        result: true,
+        verified: true,
         reason: "".to_string(),
     };
     if !is_valid_credential_format(&credential) {
-        resp.result = false;
+        resp.verified = false;
         resp.reason = "Invalid credential format.".to_string();
     } else if !is_valid_credential_expiry(&credential) {
-        resp.result = false;
+        resp.verified = false;
         resp.reason = "Invalid credential expiry.".to_string();
     } else if !is_valid_credential_schema(&credential, &schema) {
-        resp.result = false;
+        resp.verified = false;
         resp.reason = "Invalid credential schema.".to_string();
-    } else if !is_valid_verifiable_credential_proof(&credential, &proof) {
-        resp.result = false;
+    } else if !is_valid_verifiable_credential_proof(
+        &credential,
+        &proof,
+        verifying_key,
+        verification_method.clone(),
+    ) {
+        resp.verified = false;
         resp.reason = "Invalid verifiable credential proof.".to_string();
     }
     Ok(HttpResponse::Ok().json(resp))
@@ -331,8 +367,31 @@ fn is_valid_credential_schema_property_value(
     }
 }
 
-fn is_valid_verifiable_credential_proof(cred: &Credential, proof: &Proof) -> bool {
-    true
+fn is_valid_verifiable_credential_proof(
+    cred: &Credential,
+    proof: &Proof,
+    verifying_key: &[u8],
+    verification_method: VerificationMethod,
+) -> bool {
+    let cryptographic_suite = MyEcdsaSecp256k1::new();
+    let proof_purpose = "Proof Purpose".to_string();
+    let created = Utc::now();
+    let domain = "Proof Domain".to_string();
+    let challenge = "Proof Challenge".to_string();
+    let proof_options = ProofOptions::new(
+        verification_method,
+        proof_purpose,
+        created,
+        domain,
+        challenge,
+    );
+    if let Ok(is_valid_proof) =
+        cryptographic_suite.verify_proof(cred, proof, verifying_key, &proof_options)
+    {
+        is_valid_proof
+    } else {
+        false
+    }
 }
 
 pub fn init_routes() -> Scope {

@@ -32,15 +32,18 @@ pub fn presentation_builder(props: &PresentationBuilderProps) -> Html {
         e.prevent_default();
         let client = reqwest::Client::new();
         let verifier_id = verifier_id.clone();
+        let verifier_id_str = verifier_id.get_str();
         let verifiable_credential = verifiable_credential_clone.clone();
+        let verifiable_credential_str = serde_json::to_string(&verifiable_credential)
+            .expect("Could not serialize verifiable credential.");
         let set_verified = set_verified.clone();
         let request_data = json!({
-            "verifier_id": verifier_id,
-            "verifiable_credential": verifiable_credential
+            "verifier_id": verifier_id_str,
+            "verifiable_credential": verifiable_credential_str,
         });
         let future = async move {
             let url = format!("{}/verifier/verify", BASE_URL);
-            let resp = client.get(url).json(&request_data).send().await;
+            let resp = client.post(url).json(&request_data).send().await;
             match resp {
                 Ok(resp) => {
                     debug!("Response from verifying credential: {:?}", resp);
@@ -77,7 +80,7 @@ pub fn presentation_builder(props: &PresentationBuilderProps) -> Html {
             <h1 class="text-3xl text-center mb-2">{"Confirm Verifier and Credential"}</h1>
             <div class="text-center mt-2">
                 <button class="bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded" onclick={submit_credential}>
-                    {"Back"}
+                    {"Submit"}
                 </button>
             </div>
             <div class="text-center mt-2">

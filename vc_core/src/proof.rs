@@ -1,6 +1,9 @@
 use super::*;
 use chrono::{DateTime, Utc};
-use k256::ecdsa::{signature::Signer, Signature, SigningKey};
+use k256::ecdsa::{
+    signature::{Signer, Verifier},
+    Signature, SigningKey, VerifyingKey,
+};
 pub struct ProofOptions {
     verification_method: VerificationMethod,
     proof_purpose: String,
@@ -35,6 +38,17 @@ pub enum ProofGenerationError {
 }
 
 impl fmt::Display for ProofGenerationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Debug)]
+pub enum ProofVerificationError {
+    Error,
+}
+
+impl fmt::Display for ProofVerificationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
@@ -78,6 +92,14 @@ pub trait CryptographicSuite {
         let proof = self.prove(&hash_data, proving_key, options)?;
         Ok(proof)
     }
+
+    fn verify_proof(
+        &self,
+        data: &Self::DataDocument,
+        proof: &Self::OutputProof,
+        verifying_key: &[u8],
+        options: &ProofOptions,
+    ) -> Result<bool, ProofVerificationError>;
 }
 
 pub struct MyEcdsaSecp256k1 {
@@ -145,5 +167,29 @@ impl CryptographicSuite for MyEcdsaSecp256k1 {
             proof_purpose,
             proof_value,
         ))
+    }
+
+    fn verify_proof(
+        &self,
+        data: &Credential,
+        proof: &Proof,
+        verifying_key: &[u8],
+        options: &ProofOptions,
+    ) -> Result<bool, ProofVerificationError> {
+        if *proof.get_proof_purpose() != options.proof_purpose {
+            return Err(ProofVerificationError::Error);
+        }
+        let transformed_data = self
+            .transform(data, options)
+            .map_err(|_| ProofVerificationError::Error)?;
+        let hash_data = self
+            .hash(&transformed_data, options)
+            .map_err(|_| ProofVerificationError::Error)?;
+        let signature = Signature::from_slice(proof.get_proof_value())
+            .map_err(|_| ProofVerificationError::Error)?;
+        let public_key = VerifyingKey::from_sec1_bytes(verifying_key)
+            .map_err(|_| ProofVerificationError::Error)?;
+
+        Ok(public_key.verify(&hash_data, &signature).is_ok())
     }
 }
